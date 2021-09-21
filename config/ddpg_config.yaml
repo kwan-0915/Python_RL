@@ -1,0 +1,26 @@
+# utility parameters
+mode: train
+env_name: MountainCarContinuous-v0
+device: cuda
+capacity: 1000000         # Replay buffer size
+
+# hyper parameters
+tau: 0.005                # Target smoothing coefficient
+target_update_interval: 1
+test_iteration: 10
+gamma: 0.99               # Discounted factor
+batch_size: 100           # Mini batch size
+max_episode: 50           # Num of games
+learning_rate: 0.0001
+sample_frequency: 2000
+exploration_noise: 0.1
+update_iteration: 200
+
+#optional parameters
+seed: False
+random_seed: 9527
+render: False             # Show UI or not
+load: False
+render_interval: 100      # After render_interval, the env.render() will work
+log_interval: 50
+print_log: 5

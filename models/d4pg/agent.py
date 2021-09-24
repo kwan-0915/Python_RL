@@ -70,7 +70,7 @@ class Agent(object):
             self.exp_buffer.clear()
 
             if self.local_episode % 100 == 0:
-                print(f"Agent: {self.n_agent}  episode {self.local_episode}")
+                print("Agent [", self.agent_type, "]", {self.n_agent}, " episode : ", self.local_episode, "")
 
             state = self.env_wrapper.reset()
             self.ou_noise.reset()

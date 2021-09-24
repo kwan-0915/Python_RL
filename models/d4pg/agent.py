@@ -1,8 +1,10 @@
 import torch
 import ray
 import sys
+import time
 from collections import deque
 from utilities.ou_noise import OUNoise
+from utilities.logger import Logger
 from lunar_lander_wrapper import LunarLanderContinous
 
 class Agent(object):
@@ -14,11 +16,15 @@ class Agent(object):
         self.max_steps = config['max_ep_length']
         self.num_episode_save = config['num_episode_save']
         self.local_episode = 0
-        self.log_dir = log_dir
         self.should_exploit = should_exploit
         self.shared_object_actor = shared_object_actor
         self.global_episode = ray.get(self.shared_object_actor.get_global_episode.remote())
         self.exp_buffer = deque()  # Initialise deque buffer to store experiences for N-step returns
+
+        # Logging
+        self.log_dir = log_dir
+        log_path = f"{log_dir}/agent-{n_agent}"
+        self.logger = Logger(log_path)
 
         # Create environment
         self.env_wrapper = LunarLanderContinous(config)
@@ -72,6 +78,7 @@ class Agent(object):
             if self.local_episode % 100 == 0:
                 print("Agent [", self.agent_type, "]", {self.n_agent}, " episode : ", self.local_episode, "")
 
+            ep_start_time = time.time()
             state = self.env_wrapper.reset()
             self.ou_noise.reset()
             done = False
@@ -108,6 +115,11 @@ class Agent(object):
                     break
 
                 num_steps += 1
+
+            # Log metrics
+            step = ray.get(self.shared_object_actor.get_update_step.remote())
+            self.logger.scalar_summary("agent/reward", episode_reward, step)
+            self.logger.scalar_summary("agent/episode_timing", time.time() - ep_start_time, step)
 
             # Saving agent
             reward_outperformed = episode_reward - best_reward > self.config["save_reward_threshold"]

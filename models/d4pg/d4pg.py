@@ -1,12 +1,14 @@
 import ray
 import sys
 import torch
+import time
 import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 from critic import Critic
 from utilities.ou_noise import OUNoise
 from utilities.l2_projection import l2_project
+from utilities.logger import Logger
 
 
 class D4PG(object):
@@ -27,10 +29,13 @@ class D4PG(object):
         self.batch_size = config['batch_size']
         self.tau = config['tau']
         self.gamma = config['discount_rate']
-        self.log_dir = log_dir
         self.prioritized_replay = config['replay_memory_prioritized']
         self.shared_object_actor = shared_object_actor
         self.delta_z = (self.v_max - self.v_min) / (self.num_atoms - 1)
+
+        # Logging
+        self.log_dir = log_dir
+        self.logger = Logger(f"{log_dir}/learner")
 
         # Noise process
         self.ou_noise = OUNoise(dim=config["action_dim"], low=config["action_low"], high=config["action_high"])
@@ -53,6 +58,8 @@ class D4PG(object):
         self.value_criterion = nn.BCELoss(reduction='none')
 
     def _update_step(self, batch):
+        update_time = time.time()
+
         state, action, reward, next_state, done, gamma, weights, inds = batch
 
         # state_c = deepcopy(state)
@@ -135,6 +142,12 @@ class D4PG(object):
                 sys.exit(-1)
 
         # del state_c, action_c, reward_c, next_state_c, done_c, weights_c, inds_c
+
+        # Logging
+        step = ray.get(self.shared_object_actor.get_update_step.remote())
+        self.logger.scalar_summary("learner/policy_loss", policy_loss.item(), step)
+        self.logger.scalar_summary("learner/value_loss", value_loss.item(), step)
+        self.logger.scalar_summary("learner/learner_update_timing", time.time() - update_time, step)
 
     def run(self):
         while ray.get(self.shared_object_actor.get_update_step.remote()) < self.num_train_steps:

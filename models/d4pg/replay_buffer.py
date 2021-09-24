@@ -9,7 +9,7 @@ from utilities.segment_tree import SumSegmentTree, MinSegmentTree
 @ray.remote
 class SharedObject:
     def __init__(self, replay_queue_size, learner_w_queue_size, replay_priorities_queue_size, batch_queue_size,
-                 training_on, update_step, global_episode, should_exit=False):
+                 training_on, update_step, global_episode, n_threads):
         self.queues = {
             "replay_queue": deque(maxlen=replay_queue_size),
             "learner_w_queue": deque(maxlen=learner_w_queue_size),
@@ -21,13 +21,18 @@ class SharedObject:
         self.update_step = update_step
         self.global_episode = global_episode
 
-        self.should_exit = should_exit
+        self.should_exit = [False] * n_threads
+        self.ptr = 0
 
     def get_should_exit(self):
-        return self.should_exit
+        return bool(self.should_exit)
 
-    def set_should_exit(self, should_exit):
-        self.should_exit = should_exit
+    def set_should_exit(self):
+        try:
+            self.should_exit[self.ptr] = True
+            self.ptr += 1
+        except IndexError:
+            pass
 
     def get_training_on(self):
         return self.training_on

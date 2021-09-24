@@ -133,3 +133,4 @@ class Agent(object):
                 self.update_actor_learner()
 
         print("Agent [", self.agent_type, "]", {self.n_agent}, " done.")
+        self.shared_object_actor.set_should_exit.remote()

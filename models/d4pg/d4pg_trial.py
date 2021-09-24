@@ -55,6 +55,7 @@ def sampler_worker(config, shared_object_actor, log_dir=''):
         replay_buffer.dump(config["results_path"])
 
     print("Stop sampler worker.")
+    shared_object_actor.set_should_exit.remote()
 
 @ray.remote
 def learner_worker(config, policy, target_policy_net, experiment_dir, shared_object_actor):
@@ -82,7 +83,7 @@ def main(input_config=None):
 
     # Shared object
     shared_object_actor = SharedObject.remote(replay_queue_size=64, learner_w_queue_size=n_agents, replay_priorities_queue_size=64,
-                                              batch_queue_size=batch_queue_size, training_on=1, update_step=0, global_episode=0)
+                                              batch_queue_size=batch_queue_size, training_on=1, update_step=0, global_episode=0, n_threads=config['n_threads'])
 
     # Data sampler
     sampler_worker.remote(input_config, shared_object_actor, experiment_dir)

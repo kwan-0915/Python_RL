@@ -163,6 +163,6 @@ class D4PG(object):
                 print("Training step ", ray.get(self.shared_object_actor.get_update_step.remote()))
 
         self.shared_object_actor.set_training_on.remote(0)
-        self.shared_object_actor.set_should_exit.remote(True)
 
         print("Exit learner.")
+        self.shared_object_actor.set_should_exit.remote()

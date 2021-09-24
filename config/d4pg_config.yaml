@@ -40,5 +40,5 @@ tau: 0.001 # parameter for soft target network updates
 
 # Miscellaneous
 results_path: results
-n_threads: 4 # Total number of threads
+n_threads: 4 # Total number of child threads
 

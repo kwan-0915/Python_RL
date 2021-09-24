@@ -55,7 +55,7 @@ def sampler_worker(config, shared_object_actor, log_dir=''):
         replay_buffer.dump(config["results_path"])
 
     print("Stop sampler worker.")
-    shared_object_actor.set_should_exit.remote()
+    shared_object_actor.set_child_threads.remote()
 
 @ray.remote
 def learner_worker(config, policy, target_policy_net, experiment_dir, shared_object_actor):
@@ -103,9 +103,11 @@ def main(input_config=None):
     for i in range(1, n_agents):
         agent_worker.remote(input_config, policy_net_cpu, i, "exploration", experiment_dir, False, shared_object_actor)
 
-    while not ray.get(shared_object_actor.get_should_exit.remote()): pass
+    while not ray.get(shared_object_actor.get_child_threads.remote()): pass
 
-    print("End.")
+    shared_object_actor.set_main_thread.remote()
+
+    return shared_object_actor
 
 def timer(start, end):
     """ Helper to print training time """
@@ -130,9 +132,13 @@ if __name__ == '__main__':
     with open(inputs['config_file'], "r") as file:
         config = yaml.load(file, Loader=yaml.SafeLoader)
         ray.init(num_cpus=inputs['num_cpus'], num_gpus=inputs['num_gpus'])
-        main(input_config=config)
+        shared_object_actor = main(input_config=config)
+
+    while not ray.get(shared_object_actor.get_main_thread.remote()): pass
 
     t1 = time.time()
     time.sleep(1.5)
     timer(t0, t1)
+
+    print('End main thread')
 

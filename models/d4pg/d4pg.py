@@ -165,4 +165,4 @@ class D4PG(object):
         self.shared_object_actor.set_training_on.remote(0)
 
         print("Exit learner.")
-        self.shared_object_actor.set_should_exit.remote()
+        self.shared_object_actor.set_child_threads.remote()

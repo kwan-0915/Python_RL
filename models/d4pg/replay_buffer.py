@@ -21,15 +21,23 @@ class SharedObject:
         self.update_step = update_step
         self.global_episode = global_episode
 
-        self.should_exit = [False] * n_threads
+        self.child_threads = [False] * n_threads
         self.ptr = 0
 
-    def get_should_exit(self):
-        return bool(self.should_exit)
+        self.main_thread = False
 
-    def set_should_exit(self):
+    def get_main_thread(self):
+        return self.main_thread
+
+    def set_main_thread(self):
+        self.main_thread = True
+
+    def get_child_threads(self):
+        return all(self.child_threads)
+
+    def set_child_threads(self):
         try:
-            self.should_exit[self.ptr] = True
+            self.child_threads[self.ptr] = True
             self.ptr += 1
         except IndexError:
             pass

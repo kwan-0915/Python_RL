@@ -11,13 +11,17 @@ from agent import Agent
 from d4pg import D4PG
 from actor import Actor
 from replay_buffer import create_replay_buffer, SharedObject
+from utilities.logger import Logger
 
 @ray.remote
-def sampler_worker(config, shared_object_actor):
+def sampler_worker(config, shared_object_actor, log_dir=''):
     """
     Function that transfers replay to the buffer and batches from buffer to the queue.
     """
     batch_size = config['batch_size']
+
+    # Logger
+    logger = Logger(f"{log_dir}/data_struct")
 
     # Create replay buffer
     replay_buffer = create_replay_buffer(config)
@@ -81,7 +85,7 @@ def main(input_config=None):
                                               batch_queue_size=batch_queue_size, training_on=1, update_step=0, global_episode=0)
 
     # Data sampler
-    sampler_worker.remote(input_config, shared_object_actor)
+    sampler_worker.remote(input_config, shared_object_actor, experiment_dir)
 
     # Learner (neural net training process)
     target_policy_net = Actor(input_config['state_dim'], input_config['action_dim'], input_config['dense_size'], device=input_config['device'])

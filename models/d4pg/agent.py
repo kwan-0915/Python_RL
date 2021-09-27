@@ -25,7 +25,7 @@ class Agent(object):
 
         # Logging
         self.log_dir = log_dir
-        log_path = f"{log_dir}/agent-{n_agent}"
+        log_path = f"{log_dir}/agent-{self.agent_type}-{n_agent}"
         self.logger = Logger(log_path)
 
         # Create environment
@@ -140,7 +140,7 @@ class Agent(object):
         self.shared_actor.set_child_threads.remote()
 
     def save(self, checkpoint_name):
-        process_dir = f"{self.log_dir}/agent_{self.n_agent}"
+        process_dir = f"{self.log_dir}/agent_{self.agent_type}_{self.n_agent}"
         if not os.path.exists(process_dir): os.makedirs(process_dir)
 
         model_fn = f"{process_dir}/{checkpoint_name}.pt"

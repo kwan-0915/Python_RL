@@ -27,6 +27,7 @@ class Agent(object):
         self.log_dir = log_dir
         log_path = f"{log_dir}/agent-{self.agent_type}-{n_agent}"
         self.logger = Logger(log_path)
+        self.first_save = True
 
         # Create environment
         self.env_wrapper = create_env_wrapper(config)
@@ -125,12 +126,14 @@ class Agent(object):
 
             # Saving agent
             reward_outperformed = episode_reward - best_reward > self.config["save_reward_threshold"]
-            time_to_save = self.local_episode % self.num_episode_save == 0
-            if self.n_agent == 0 and (time_to_save or reward_outperformed):
+            # time_to_save = self.local_episode % self.num_episode_save == 0
+            if self.n_agent == 0 and (self.first_save or reward_outperformed):
                 if episode_reward > best_reward:
                     best_reward = episode_reward
 
                 self.save(f"local_episode_{self.local_episode}_reward_{best_reward:4f}")
+
+                self.first_save = False
 
             rewards.append(episode_reward)
             if self.agent_type == "exploration" and self.local_episode % self.config['update_agent_ep'] == 0:

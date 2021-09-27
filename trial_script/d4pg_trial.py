@@ -49,9 +49,16 @@ def sampler_worker(config, shared_actor, log_dir=''):
         try:
             batch = replay_buffer.sample(batch_size)
             shared_actor.append.remote("batch_queue", batch)
-        except:
+        except KeyError:
             sleep(0.1)
             continue
+
+        # Log data structures sizes
+        step = ray.get(shared_actor.get_update_step.remote())
+        logger.scalar_summary("data_stuct/global_episode", ray.get(shared_actor.get_global_episode.remote()), step)
+        logger.scalar_summary("data_struct/replay_queue", len(ray.get(shared_actor.get_queue.remote("replay_queue"))), step)
+        logger.scalar_summary("data_struct/batch_queue", len(ray.get(shared_actor.get_queue.remote("batch_queue"))), step)
+        logger.scalar_summary("data_struct/replay_buffer", len(replay_buffer), step)
 
     if config['save_buffer_on_disk']:
         replay_buffer.dump(config["results_path"])
@@ -61,8 +68,8 @@ def sampler_worker(config, shared_actor, log_dir=''):
 
 
 @ray.remote
-def learner_worker(config, policy, target_policy_net, experiment_dir, shared_actor):
-    learner = D4PG(config, policy, target_policy_net, shared_actor, log_dir=experiment_dir)
+def learner_worker(config, actor, target_actor, experiment_dir, shared_actor):
+    learner = D4PG(config, actor, target_actor, shared_actor, log_dir=experiment_dir)
     learner.run()
 
 
@@ -94,19 +101,19 @@ def main(input_config=None):
     sampler_worker.remote(input_config, shared_actor, experiment_dir)
 
     # Learner (neural net training process)
-    target_policy_net = Actor(input_config['state_dim'], input_config['action_dim'], input_config['dense_size'], device=input_config['device'])
-    policy_net = copy.deepcopy(target_policy_net)
-    policy_net_cpu = Actor(input_config['state_dim'], input_config['action_dim'], input_config['dense_size'], device=input_config['agent_device'])
-    target_policy_net.share_memory()
+    target_actor = Actor(input_config['state_dim'], input_config['action_dim'], input_config['dense_size'], device=input_config['device'])
+    actor = copy.deepcopy(target_actor)
+    actor_cpu = Actor(input_config['state_dim'], input_config['action_dim'], input_config['dense_size'], device=input_config['agent_device'])
+    target_actor.share_memory()
 
-    learner_worker.remote(input_config, policy_net, target_policy_net, experiment_dir, shared_actor)
+    learner_worker.remote(input_config, actor, target_actor, experiment_dir, shared_actor)
 
     # Single agent for exploitation
-    agent_worker.remote(input_config, target_policy_net, 0, "exploitation", experiment_dir, True, shared_actor)
+    agent_worker.remote(input_config, target_actor, 0, "exploitation", experiment_dir, True, shared_actor)
 
     # Agents (exploration processes)
     for i in range(1, n_agents):
-        agent_worker.remote(input_config, policy_net_cpu, i, "exploration", experiment_dir, False, shared_actor)
+        agent_worker.remote(input_config, actor_cpu, i, "exploration", experiment_dir, False, shared_actor)
 
     while not ray.get(shared_actor.get_child_threads.remote()): pass
 

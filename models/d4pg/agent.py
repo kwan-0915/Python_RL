@@ -1,7 +1,8 @@
-import torch
+import os
 import ray
 import sys
 import time
+import torch
 from collections import deque
 
 from utilities.utils import create_env_wrapper
@@ -129,9 +130,18 @@ class Agent(object):
                 if episode_reward > best_reward:
                     best_reward = episode_reward
 
+                self.save(f"local_episode_{self.local_episode}_reward_{best_reward:4f}")
+
             rewards.append(episode_reward)
             if self.agent_type == "exploration" and self.local_episode % self.config['update_agent_ep'] == 0:
                 self.update_actor_learner()
 
         print("Agent [", self.agent_type, "]", {self.n_agent}, " done.")
         self.shared_actor.set_child_threads.remote()
+
+    def save(self, checkpoint_name):
+        process_dir = f"{self.log_dir}/agent_{self.n_agent}"
+        if not os.path.exists(process_dir): os.makedirs(process_dir)
+
+        model_fn = f"{process_dir}/{checkpoint_name}.pt"
+        torch.save(self.actor, model_fn)

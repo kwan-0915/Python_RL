@@ -14,12 +14,12 @@ from utilities.logger import Logger
 class D4PG(object):
     """Actor and Critic update routine. """
 
-    def __init__(self, config, policy_net, target_policy_net, shared_object_actor, log_dir=''):
+    def __init__(self, config, actor, target_actor, shared_actor, log_dir=''):
         hidden_dim = config['dense_size']
         state_dim = config['state_dim']
         action_dim = config['action_dim']
-        value_lr = config['critic_learning_rate']
-        policy_lr = config['actor_learning_rate']
+        critic_lr = config['critic_learning_rate']
+        actor_lr = config['actor_learning_rate']
         self.v_min = config['v_min']
         self.v_max = config['v_max']
         self.num_atoms = config['num_atoms']
@@ -30,7 +30,7 @@ class D4PG(object):
         self.tau = config['tau']
         self.gamma = config['discount_rate']
         self.prioritized_replay = config['replay_memory_prioritized']
-        self.shared_object_actor = shared_object_actor
+        self.shared_actor = shared_actor
         self.delta_z = (self.v_max - self.v_min) / (self.num_atoms - 1)
 
         # Logging
@@ -40,20 +40,25 @@ class D4PG(object):
         # Noise process
         self.ou_noise = OUNoise(dim=config["action_dim"], low=config["action_low"], high=config["action_high"])
 
-        # Value and policy nets
-        self.value_net = Critic(state_dim, action_dim, hidden_dim, self.v_min, self.v_max, self.num_atoms, device=self.device)
-        self.policy_net = policy_net
-        self.target_value_net = Critic(state_dim, action_dim, hidden_dim, self.v_min, self.v_max, self.num_atoms, device=self.device)
-        self.target_policy_net = target_policy_net
+        # Base Actor and Critic
+        self.actor = actor
+        self.critic = Critic(state_dim, action_dim, hidden_dim, self.v_min, self.v_max, self.num_atoms, device=self.device)
 
-        for target_param, param in zip(self.target_value_net.parameters(), self.value_net.parameters()):
+        # Target Actor and Critic
+        self.target_actor = target_actor
+        self.target_critic = Critic(state_dim, action_dim, hidden_dim, self.v_min, self.v_max, self.num_atoms, device=self.device)
+
+        # Copy Actor to Target Actor
+        for target_param, param in zip(self.target_actor.parameters(), self.actor.parameters()):
             target_param.data.copy_(param.data)
 
-        for target_param, param in zip(self.target_policy_net.parameters(), self.policy_net.parameters()):
+        # Copy Critic to Target Critic
+        for target_param, param in zip(self.target_critic.parameters(), self.critic.parameters()):
             target_param.data.copy_(param.data)
 
-        self.value_optimizer = optim.Adam(self.value_net.parameters(), lr=value_lr)
-        self.policy_optimizer = optim.Adam(self.policy_net.parameters(), lr=policy_lr)
+        # Actor and Critic Optimizer
+        self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=critic_lr)
+        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=actor_lr)
 
         self.value_criterion = nn.BCELoss(reduction='none')
 
@@ -85,10 +90,10 @@ class D4PG(object):
         # ------- Update critic -------
 
         # Predict next actions with target policy network
-        next_action = self.target_policy_net(next_state)
+        next_action = self.target_actor(next_state)
 
         # Predict Z distribution with target value network
-        target_value = self.target_value_net.get_probs(next_state, next_action.detach())
+        target_value = self.target_critic.get_probs(next_state, next_action.detach())
 
         # Get projected distribution
         target_z_projected = l2_project(next_distr_v=target_value, rewards_v=reward, dones_mask_t=done,
@@ -97,72 +102,72 @@ class D4PG(object):
 
         target_z_projected = torch.from_numpy(target_z_projected).float().cuda()
 
-        critic_value = self.value_net.get_probs(state, action)
+        critic_value = self.critic.get_probs(state, action)
         critic_value = critic_value.cuda()
 
-        value_loss = self.value_criterion(critic_value, target_z_projected)
-        value_loss = value_loss.mean(axis=1)
+        critic_loss = self.value_criterion(critic_value, target_z_projected)
+        critic_loss = critic_loss.mean(axis=1)
 
         # Update priorities in buffer
-        td_error = value_loss.cpu().detach().numpy().flatten()
+        td_error = critic_loss.cpu().detach().numpy().flatten()
         priority_epsilon = 1e-4
         if self.prioritized_replay:
             weights_update = np.abs(td_error) + priority_epsilon
-            self.shared_object_actor.append.remote("replay_priority_queue", (inds, weights_update))
-            value_loss = value_loss * torch.tensor(weights).float().cuda()
+            self.shared_actor.append.remote("replay_priority_queue", (inds, weights_update))
+            critic_loss = critic_loss * torch.tensor(weights).float().cuda()
 
         # Update step
-        value_loss = value_loss.mean()
-        self.value_optimizer.zero_grad()
-        value_loss.backward()
-        self.value_optimizer.step()
+        critic_loss = critic_loss.mean()
+        self.critic_optimizer.zero_grad()
+        critic_loss.backward()
+        self.critic_optimizer.step()
 
         # -------- Update actor -----------
-        policy_loss = self.value_net.get_probs(state, self.policy_net(state))
-        policy_loss = policy_loss * torch.from_numpy(self.value_net.z_atoms).float().cuda()
-        policy_loss = torch.sum(policy_loss, dim=1)
-        policy_loss = -policy_loss.mean()
+        actor_loss = self.critic.get_probs(state, self.actor(state))
+        actor_loss = actor_loss * torch.from_numpy(self.critic.z_atoms).float().cuda()
+        actor_loss = torch.sum(actor_loss, dim=1)
+        actor_loss = -actor_loss.mean()
 
-        self.policy_optimizer.zero_grad()
-        policy_loss.backward()
-        self.policy_optimizer.step()
+        self.actor_optimizer.zero_grad()
+        actor_loss.backward()
+        self.actor_optimizer.step()
 
-        for target_param, param in zip(self.target_value_net.parameters(), self.value_net.parameters()):
+        for target_param, param in zip(self.target_critic.parameters(), self.critic.parameters()):
             target_param.data.copy_(target_param.data * (1.0 - self.tau) + param.data * self.tau)
 
-        for target_param, param in zip(self.target_policy_net.parameters(), self.policy_net.parameters()):
+        for target_param, param in zip(self.target_actor.parameters(), self.actor.parameters()):
             target_param.data.copy_(target_param.data * (1.0 - self.tau) + param.data * self.tau)
 
         # Send updated learner to the queue
-        if ray.get(self.shared_object_actor.get_update_step.remote()) % 100 == 0:
+        if ray.get(self.shared_actor.get_update_step.remote()) % 100 == 0:
             try:
-                params = [p.data.cpu().detach().numpy() for p in self.policy_net.parameters()]
-                self.shared_object_actor.append.remote("learner_w_queue", params)
+                params = [p.data.cpu().detach().numpy() for p in self.actor.parameters()]
+                self.shared_actor.append.remote("learner_w_queue", params)
             except KeyError:
                 sys.exit(-1)
 
         # del state_c, action_c, reward_c, next_state_c, done_c, weights_c, inds_c
 
         # Logging
-        step = ray.get(self.shared_object_actor.get_update_step.remote())
-        self.logger.scalar_summary("learner/policy_loss", policy_loss.item(), step)
-        self.logger.scalar_summary("learner/value_loss", value_loss.item(), step)
+        step = ray.get(self.shared_actor.get_update_step.remote())
+        self.logger.scalar_summary("learner/actor_loss", actor_loss.item(), step)
+        self.logger.scalar_summary("learner/critic_loss", critic_loss.item(), step)
         self.logger.scalar_summary("learner/learner_update_timing", time.time() - update_time, step)
 
     def run(self):
-        while ray.get(self.shared_object_actor.get_update_step.remote()) < self.num_train_steps:
+        while ray.get(self.shared_actor.get_update_step.remote()) < self.num_train_steps:
             try:
-                batch = ray.get(self.shared_object_actor.get_queue.remote("batch_queue")).pop()
+                batch = ray.get(self.shared_actor.get_queue.remote("batch_queue")).pop()
             except IndexError:
                 continue
 
             self._update_step(batch)
-            self.shared_object_actor.set_update_step.remote()
+            self.shared_actor.set_update_step.remote()
 
-            if ray.get(self.shared_object_actor.get_update_step.remote()) % 1000 == 0:
-                print("Training step ", ray.get(self.shared_object_actor.get_update_step.remote()))
+            if ray.get(self.shared_actor.get_update_step.remote()) % 1000 == 0:
+                print("Training step ", ray.get(self.shared_actor.get_update_step.remote()))
 
-        self.shared_object_actor.set_training_on.remote(0)
+        self.shared_actor.set_training_on.remote(0)
 
         print("Exit learner.")
-        self.shared_object_actor.set_child_threads.remote()
+        self.shared_actor.set_child_threads.remote()

@@ -5,7 +5,7 @@ import time
 import numpy as np
 import torch.nn as nn
 import torch.optim as optim
-from critic import Critic
+from models.d4pg.critic import Critic
 from utilities.ou_noise import OUNoise
 from utilities.l2_projection import l2_project
 from utilities.logger import Logger

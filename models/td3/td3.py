@@ -4,7 +4,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 from .actor import Actor
 from .critic import Critic
-from utilities.replay_buffer import replay_buffer
+from utilities.replay_buffer import SimpleReplayBuffer
 from tensorboardX import SummaryWriter
 
 class TD3(object):
@@ -21,7 +21,7 @@ class TD3(object):
         self.directory = directory
         self.writer = SummaryWriter(self.directory)
 
-        self.replay_buffer = replay_buffer(args.capacity)
+        self.replay_buffer = SimpleReplayBuffer(args.capacity)
 
         self.actor = Actor(state_dim, action_dim, self.max_action).to(self.device)
         self.actor_target = copy.deepcopy(self.actor)

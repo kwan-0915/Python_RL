@@ -1,4 +1,4 @@
-from env_wrapper import EnvWrapper
+from utilities.env_wrapper import EnvWrapper
 
 class LunarLanderContinous(EnvWrapper):
     def __init__(self, config):

@@ -3,7 +3,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 from .actor import Actor
 from .critic import Critic
-from utilities.replay_buffer import replay_buffer
+from utilities.replay_buffer import SimpleReplayBuffer
 from tensorboardX import SummaryWriter
 
 class DDPG(object):
@@ -22,7 +22,7 @@ class DDPG(object):
         self.critic_target.load_state_dict(self.critic.state_dict())
         self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=1e-3)
 
-        self.replay_buffer = replay_buffer(capacity=self.args.capacity)
+        self.replay_buffer = SimpleReplayBuffer(capacity=self.args.capacity)
         self.writer = SummaryWriter(directory)
 
         self.num_critic_update_iteration = 0

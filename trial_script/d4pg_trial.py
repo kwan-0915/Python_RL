@@ -7,7 +7,7 @@ import time
 import multiprocessing as mp
 from time import sleep
 from datetime import datetime
-from models.d4pg.agent import Agent
+from utilities.agent import Agent
 from models.d4pg.d4pg import D4PG
 from models.d4pg.actor import Actor
 from utilities.replay_buffer import create_replay_buffer

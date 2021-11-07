@@ -6,9 +6,14 @@ import torch
 import shutil
 from collections import deque
 
-from utilities.utils import create_env_wrapper, make_gif
+from utilities.utils import make_gif
+from environments.env_wrapper import create_env_wrapper
 from utilities.ou_noise import OUNoise
 from utilities.logger import Logger
+
+""""
+Agent to interact with the env, for d3pg | d4pg
+"""
 
 class Agent(object):
     def __init__(self, config, policy, n_agent=0, agent_type='exploration', log_dir='', should_exploit=False, shared_actor=None):

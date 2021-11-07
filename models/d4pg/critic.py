@@ -12,7 +12,6 @@ class Critic(nn.Module):
             v_min (float): minimum value for critic
             v_max (float): maximum value for critic
             num_atoms (int): number of atoms in distribution
-            init_w:
         """
         super(Critic, self).__init__()
 

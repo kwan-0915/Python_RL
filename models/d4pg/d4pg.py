@@ -10,7 +10,6 @@ from utilities.ou_noise import OUNoise
 from utilities.l2_projection import l2_project
 from utilities.logger import Logger
 
-
 class D4PG(object):
     """Actor and Critic update routine. """
 

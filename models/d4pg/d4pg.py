@@ -29,7 +29,7 @@ class D4PG(object):
         self.batch_size = config['batch_size']
         self.tau = config['tau']
         self.gamma = config['discount_rate']
-        self.n_step_return = config['n_step_return']
+        self.n_step_return = config['n_step_returns']
         self.prioritized_replay = config['replay_memory_prioritized']
         self.shared_actor = shared_actor
         self.delta_z = (self.v_max - self.v_min) / (self.num_atoms - 1)

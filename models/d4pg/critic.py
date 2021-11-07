@@ -3,7 +3,7 @@ import numpy as np
 import torch.nn as nn
 
 class Critic(nn.Module):
-    def __init__(self, num_states, num_actions, hidden_size, v_min, v_max, num_atoms, init_w=3e-3, device='cuda'):
+    def __init__(self, num_states, num_actions, hidden_size, v_min, v_max, num_atoms, device='cuda'):
         """
         Args:
             num_states (int): state dimension
@@ -19,9 +19,6 @@ class Critic(nn.Module):
         self.linear1 = nn.Linear(num_states + num_actions, hidden_size)
         self.linear2 = nn.Linear(hidden_size, hidden_size)
         self.linear3 = nn.Linear(hidden_size, num_atoms)
-
-        self.linear3.weight.data.uniform_(-init_w, init_w)
-        self.linear3.bias.data.uniform_(-init_w, init_w)
 
         self.z_atoms = np.linspace(v_min, v_max, num_atoms)
 

@@ -55,7 +55,7 @@ def sampler_worker(config, shared_actor, log_dir=''):
 
         # Log data structures sizes
         step = ray.get(shared_actor.get_update_step.remote())
-        logger.scalar_summary("data_stuct/global_episode", ray.get(shared_actor.get_global_episode.remote()), step)
+        logger.scalar_summary("data_struct/global_episode", ray.get(shared_actor.get_global_episode.remote()), step)
         logger.scalar_summary("data_struct/replay_queue", len(ray.get(shared_actor.get_queue.remote("replay_queue"))), step)
         logger.scalar_summary("data_struct/batch_queue", len(ray.get(shared_actor.get_queue.remote("batch_queue"))), step)
         logger.scalar_summary("data_struct/replay_buffer", len(replay_buffer), step)

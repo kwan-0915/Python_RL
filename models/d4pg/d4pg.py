@@ -29,6 +29,7 @@ class D4PG(object):
         self.batch_size = config['batch_size']
         self.tau = config['tau']
         self.gamma = config['discount_rate']
+        self.n_step_return = config['n_step_return']
         self.prioritized_replay = config['replay_memory_prioritized']
         self.shared_actor = shared_actor
         self.delta_z = (self.v_max - self.v_min) / (self.num_atoms - 1)
@@ -97,7 +98,7 @@ class D4PG(object):
 
         # Get projected distribution
         target_z_projected = l2_project(next_distr_v=target_value, rewards_v=reward, dones_mask_t=done,
-                                        gamma=self.gamma ** 5, n_atoms=self.num_atoms, v_min=self.v_min,
+                                        gamma=self.gamma ** self.n_step_return, n_atoms=self.num_atoms, v_min=self.v_min,
                                         v_max=self.v_max, delta_z=self.delta_z)
 
         target_z_projected = torch.from_numpy(target_z_projected).float().cuda()

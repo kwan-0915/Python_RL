@@ -3,9 +3,10 @@ import ray
 import sys
 import time
 import torch
+import shutil
 from collections import deque
 
-from utilities.utils import create_env_wrapper
+from utilities.utils import create_env_wrapper, make_gif
 from utilities.ou_noise import OUNoise
 from utilities.logger import Logger
 
@@ -94,6 +95,9 @@ class Agent(object):
                     action = action.detach().cpu().numpy().flatten()
 
                 next_state, reward, done = self.env_wrapper.step(action)
+                num_steps += 1
+
+                if num_steps == self.max_steps: done = True
 
                 episode_reward += reward
 
@@ -120,8 +124,8 @@ class Agent(object):
 
             # Log metrics
             step = ray.get(self.shared_actor.get_update_step.remote())
-            self.logger.scalar_summary("agent/reward", episode_reward, step)
-            self.logger.scalar_summary("agent/episode_timing", time.time() - ep_start_time, step)
+            self.logger.scalar_summary(f"agent_{self.agent_type}/reward", episode_reward, step)
+            self.logger.scalar_summary(f"agent_{self.agent_type}/episode_timing", time.time() - ep_start_time, step)
 
             # Saving agent
             reward_outperformed = episode_reward - best_reward > self.config["save_reward_threshold"]
@@ -145,3 +149,26 @@ class Agent(object):
 
         model_fn = f"{process_dir}/{checkpoint_name}.pt"
         torch.save(self.actor, model_fn)
+
+    def save_replay_gif(self, output_dir_name):
+        import matplotlib.pyplot as plt
+
+        dir_name = output_dir_name
+        if not os.path.exists(dir_name):
+            os.makedirs(dir_name)
+
+        state = self.env_wrapper.reset()
+        for step in range(self.max_steps):
+            action = self.actor.get_action(state)
+            action = action.cpu().detach().numpy()
+            next_state, reward, done = self.env_wrapper.step(action)
+            img = self.env_wrapper.render()
+            plt.imsave(fname=f"{dir_name}/{step}.png", arr=img)
+            state = next_state
+            if done:
+                break
+
+        fn = f"{self.config['env']}-{self.config['model']}-{step}.gif"
+        make_gif(dir_name, f"{self.log_dir}/{fn}")
+        shutil.rmtree(dir_name, ignore_errors=False, onerror=None)
+        print("fig saved to ", f"{self.log_dir}/{fn}")

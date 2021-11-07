@@ -4,11 +4,10 @@ state_dim: 17
 action_dim: 6
 action_low: -1
 action_high: 1
-num_agents: 4
+num_agents: 2
 random_seed: 2019
 
 # Training parameters
-
 model: d4pg
 batch_size: 256
 num_steps_train: 500_000 # number of episodes from all agents
@@ -31,7 +30,6 @@ save_reward_threshold: 1 # difference in best reward to save agent model
 
 
 # Network parameters
-
 critic_learning_rate: 0.0003
 actor_learning_rate: 0.0003
 dense_size: 256 # size of the 2 hidden layers in networks
@@ -42,3 +40,4 @@ tau: 0.005 # parameter for soft target network updates
 
 # Miscellaneous
 results_path: results
+n_threads: 4 # Total number of child threads

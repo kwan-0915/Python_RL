@@ -57,8 +57,8 @@ class D4PG(object):
             target_param.data.copy_(param.data)
 
         # Actor and Critic Optimizer
-        self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=critic_lr)
         self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=actor_lr)
+        self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=critic_lr)
 
         self.value_criterion = nn.BCELoss(reduction='none')
 

@@ -1,9 +1,9 @@
-import argparse
-import copy
 import os
 import ray
+import copy
 import yaml
 import time
+import argparse
 import multiprocessing as mp
 from time import sleep
 from datetime import datetime
@@ -13,7 +13,6 @@ from models.d4pg.actor import Actor
 from utilities.replay_buffer import create_replay_buffer
 from utilities.shared_actor import SharedActor
 from utilities.logger import Logger
-
 
 @ray.remote
 def sampler_worker(config, shared_actor, log_dir=''):

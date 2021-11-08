@@ -3,6 +3,10 @@ import imageio
 import numpy as np
 import plotly.graph_objects as go
 from glob import glob
+from environments.lunar_lander_wrapper import LunarLanderContinous
+from portfolio.fx_portfolio_wrapper import FXPortfolioWrapper
+from utilities.env_wrapper import EnvWrapper
+
 
 def make_gif(source_dir, output):
     """
@@ -58,3 +62,13 @@ def max_drawdown(returns, eps=1e-8):
     peak = returns.max()
     trough = returns[returns.argmax():].min()
     return (trough - peak) / (peak + eps)
+
+
+def create_env_wrapper(config):
+    env_name = config['env']
+    if env_name == "LunarLanderContinuous-v2":
+        return LunarLanderContinous
+    elif env_name == 'FX':
+        return FXPortfolioWrapper
+
+    return EnvWrapper(env_name)

@@ -6,8 +6,7 @@ import torch
 import shutil
 from collections import deque
 
-from utilities.utils import make_gif
-from utilities.env_wrapper import create_env_wrapper
+from utilities.utils import make_gif, create_env_wrapper
 from utilities.ou_noise import OUNoise
 from utilities.logger import Logger
 

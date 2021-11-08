@@ -27,7 +27,7 @@ class FXOHLCGenerator:
         ticker_name = [fn.split(self.file_extension)[0] for fn in self.fx_files]
         header_cols = ['ots', 'otms', 'date', 'time', 'open', 'high', 'low', 'close', 'volume']
 
-        print(self.fx_files)
+        # print(self.fx_files)
         for i in range(len(self.fx_files)):
             df = pd.read_csv('/'.join((self.path, self.fx_files[i])), parse_dates=True, date_parser=self.dateparse, index_col='ots', names=header_cols)
             df = df[self.start_date:]

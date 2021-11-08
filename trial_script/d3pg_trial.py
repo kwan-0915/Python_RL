@@ -138,12 +138,14 @@ if __name__ == '__main__':
     parser.add_argument("--config_file", type=str, help="Config file path")
     parser.add_argument("--num_cpus", type=int, help="Number of available CPUs")
     parser.add_argument("--num_gpus", type=int, help="Number of available GPUs")
+    parser.add_argument("--data_file", type=str, help="Abs path for csv file")
     inputs = vars(parser.parse_args())
 
     t0 = time.time()
 
     with open(inputs['config_file'], "r") as file:
         config = yaml.load(file, Loader=yaml.SafeLoader)
+        config['path'] = inputs['data_file']
         ray.init(num_cpus=inputs['num_cpus'], num_gpus=inputs['num_gpus'])
         shared_actor = main(input_config=config)
 

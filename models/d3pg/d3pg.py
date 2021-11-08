@@ -55,7 +55,7 @@ class D3PG(object):
     def _update_step(self, batch, min_value=-np.inf, max_value=np.inf):
         update_time = time.time()
 
-        state, action, reward, next_state, done = batch
+        state, action, reward, next_state, done, _, _, _ = batch
 
         # Move to CUDA
         state = torch.from_numpy(state).float().to(self.device)

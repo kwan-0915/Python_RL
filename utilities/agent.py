@@ -6,7 +6,8 @@ import torch
 import shutil
 from collections import deque
 
-from utilities.utils import make_gif, create_env_wrapper
+from utilities.utils import create_env_wrapper
+from utilities.visualization import make_gif
 from utilities.ou_noise import OUNoise
 from utilities.logger import Logger
 
@@ -16,7 +17,7 @@ Agent to interact with the env, for d3pg | d4pg
 
 class Agent(object):
     def __init__(self, config, policy, n_agent=0, agent_type='exploration', log_dir='', should_exploit=False, shared_actor=None):
-        print(f"Initializing agent {n_agent}...")
+        print(f"Initializing {agent_type}-agent-{n_agent}...")
         self.config = config
         self.n_agent = n_agent
         self.agent_type = agent_type
@@ -94,11 +95,11 @@ class Agent(object):
                 action = self.actor.get_action(state)
                 if self.agent_type == "exploration":
                     action = self.ou_noise.get_action(action, num_steps)
-                    action = action.squeeze(0)
+                    action = action.squeeze()
                 else:
                     action = action.detach().cpu().numpy().flatten()
 
-                next_state, reward, done = self.env_wrapper.step(action)
+                next_state, reward, done, _ = self.env_wrapper.step(action)
                 num_steps += 1
 
                 if num_steps == self.max_steps: done = True

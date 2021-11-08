@@ -6,7 +6,6 @@ num_asset: 7
 num_data: 6400
 window_length: 64
 ohlc_interval: 1h
-path: data_files/fx_data
 file_extension: .csv
 
 # TA-LIB
@@ -38,7 +37,7 @@ num_agents: 2
 random_seed: 1983
 
 # Training parameters
-model: ddpg
+model: d3pg
 batch_size: 256
 num_steps_train: 100_000 # number of episodes from all agents
 max_ep_length: 480 # maximum number of steps per episode
@@ -52,6 +51,7 @@ num_episode_save: 20
 device: cuda
 agent_device: cpu
 save_reward_threshold: 0.01 # difference in best reward to save agent model
+replay_memory_prioritized: 0
 
 # Network parameters
 critic_learning_rate: 0.0005

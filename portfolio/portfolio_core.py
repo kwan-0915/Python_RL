@@ -2,6 +2,8 @@ import gym
 import numpy as np
 import pandas as pd
 from pprint import pprint
+
+import utilities.visualization
 from utilities import utils
 from signals.signals_controller import SignalsController
 from portfolio.portfolio_simulator import PortfolioSimulator
@@ -109,5 +111,5 @@ class PortfolioEnv(gym.Env):
         mdd = utils.max_drawdown(df_info.rate_of_return + 1)
         sharpe_ratio = utils.sharpe(df_info.rate_of_return)
         title = 'max_drawdown={: 2.2%} sharpe_ratio={: 2.4f}'.format(mdd, sharpe_ratio)
-        utils.make_figure(df_info.index, df_info["portfolio_value"], df_info["market_value"], title=title, xtitle='Timesteps', ytitle='Value')
+        utilities.visualization.make_figure(df_info.index, df_info["portfolio_value"], df_info["market_value"], title=title, xtitle='Timesteps', ytitle='Value')
         # make_figure(df_info.index.strftime("%Y/%m/%d"), df_info["portfolio_value"], df_info["market_value"], title=title, xtitle='Timesteps', ytitle='Value')

@@ -1,7 +1,8 @@
 import time
 import numpy as np
 import pandas as pd
-from utilities.utils import make_figure
+from utilities.visualization import make_figure
+
 
 class ShmOHLCGenerator:
     """

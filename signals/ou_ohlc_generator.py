@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from utilities.utils import make_figure
+from utilities.visualization import make_figure
+
 
 class OuOHLCGenerator:
     """

@@ -1,7 +1,7 @@
 import numpy as np
 from signals.feat_controller import FeatController
 from portfolio.portfolio_core import PortfolioEnv
-from environments.env_wrapper import ABCEnvWrapper
+from utilities.env_wrapper import ABCEnvWrapper
 
 class FXPortfolioWrapper(ABCEnvWrapper):
     global_config = None

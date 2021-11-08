@@ -7,7 +7,7 @@ import shutil
 from collections import deque
 
 from utilities.utils import make_gif
-from environments.env_wrapper import create_env_wrapper
+from utilities.env_wrapper import create_env_wrapper
 from utilities.ou_noise import OUNoise
 from utilities.logger import Logger
 

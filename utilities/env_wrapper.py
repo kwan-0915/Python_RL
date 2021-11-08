@@ -1,6 +1,6 @@
 import gym
 from abc import ABC, abstractmethod
-from environments.lunar_lander_wrapper import LunarLanderContinous
+# from environments.lunar_lander_wrapper import LunarLanderContinous
 from portfolio.fx_portfolio_wrapper import FXPortfolioWrapper
 
 eps = 1e-8
@@ -8,7 +8,7 @@ eps = 1e-8
 def create_env_wrapper(config):
     env_name = config['env']
     if env_name == "LunarLanderContinuous-v2":
-        return LunarLanderContinous(config)
+        pass
     elif env_name == 'FX':
         return FXPortfolioWrapper
 

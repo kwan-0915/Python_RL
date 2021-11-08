@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
-from shm_ohlc_generator import ShmOHLCGenerator
-from ou_ohlc_generator import OuOHLCGenerator
-from fx_ohlc_generator import FXOHLCGenerator
+from signals.shm_ohlc_generator import ShmOHLCGenerator
+from signals.ou_ohlc_generator import OuOHLCGenerator
+from signals.fx_ohlc_generator import FXOHLCGenerator
 
 class SignalsController:
     """

@@ -6,7 +6,7 @@ num_asset: 7
 num_data: 6400
 window_length: 64
 ohlc_interval: 1h
-path: data/fx_data
+path: data_files/fx_data
 file_extension: .csv
 
 # TA-LIB

@@ -1,4 +1,4 @@
-from indicators_generator import IndicatorsGenerator
+from signals.indicators_generator import IndicatorsGenerator
 
 class FeatController:
     def __init__(self, ohlcv_data, indicators):

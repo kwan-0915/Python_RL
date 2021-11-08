@@ -4,7 +4,7 @@ import pandas as pd
 from pprint import pprint
 from utilities import utils
 from signals.signals_controller import SignalsController
-from portfolio_simulator import PortfolioSimulator
+from portfolio.portfolio_simulator import PortfolioSimulator
 
 class PortfolioEnv(gym.Env):
     """

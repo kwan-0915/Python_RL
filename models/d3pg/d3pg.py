@@ -6,6 +6,7 @@ import time
 import numpy as np
 import torch.nn as nn
 import torch.optim as optim
+from copy import deepcopy
 from models.d3pg.critic import Critic
 from utilities.ou_noise import OUNoise
 from utilities.logger import Logger
@@ -57,12 +58,18 @@ class D3PG(object):
 
         state, action, reward, next_state, done, _, _, _ = batch
 
+        state_c = deepcopy(state)
+        action_c = deepcopy(action)
+        reward_c = deepcopy(reward)
+        next_state_c = deepcopy(next_state)
+        done_c = deepcopy(done)
+
         # Move to CUDA
-        state = torch.from_numpy(state).float().to(self.device)
-        action = torch.from_numpy(action).float().to(self.device)
-        next_state = torch.from_numpy(next_state).float().to(self.device)
-        reward = torch.from_numpy(reward).float().to(self.device)
-        done = torch.from_numpy(done).float().to(self.device)
+        state = torch.from_numpy(state_c).float().to(self.device)
+        action = torch.from_numpy(action_c).float().to(self.device)
+        next_state = torch.from_numpy(reward_c).float().to(self.device)
+        reward = torch.from_numpy(next_state_c).float().to(self.device)
+        done = torch.from_numpy(done_c).float().to(self.device)
 
         # ------- Update critic -------
         next_action = self.target_actor(next_state)

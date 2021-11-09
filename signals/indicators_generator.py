@@ -81,7 +81,7 @@ class IndicatorsGenerator:
     def get_norm_price(self):
         close_price = self.ohlcv[:, :, 3]
         min_max_range = np.expand_dims((np.max(close_price, axis=1) - np.min(close_price, axis=1)), axis=1)
-        norm_price = np.nan_to_num((close_price - np.expand_dims(np.min(close_price, axis=1), axis=1)) / min_max_range)
+        norm_price = np.nan_to_num((close_price - np.expand_dims(np.min(close_price, axis=1), axis=1)) / min_max_range) if min_max_range != 0 else 0
         return norm_price
 
     # get moving average period=5

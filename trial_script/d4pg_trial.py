@@ -7,7 +7,7 @@ import argparse
 import multiprocessing as mp
 from time import sleep
 from datetime import datetime
-from utilities.agent import Agent
+from models.d3pg.agent import D3PGAgent
 from models.d4pg.d4pg import D4PG
 from models.d4pg.actor import Actor
 from utilities.replay_buffer import create_replay_buffer
@@ -65,16 +65,14 @@ def sampler_worker(config, shared_actor, log_dir=''):
     print("Stop sampler worker.")
     shared_actor.set_child_threads.remote()
 
-
 @ray.remote
 def learner_worker(config, actor, target_actor, experiment_dir, shared_actor):
     learner = D4PG(config, actor, target_actor, shared_actor, log_dir=experiment_dir)
     learner.run()
 
-
 @ray.remote
 def agent_worker(config, policy, i, agent_type, experiment_dir, should_exploit=False, shared_actor=None):
-    agent = Agent(config=config,
+    agent = D3PGAgent(config=config,
                   policy=policy,
                   n_agent=i,
                   agent_type=agent_type,
@@ -82,7 +80,6 @@ def agent_worker(config, policy, i, agent_type, experiment_dir, should_exploit=F
                   should_exploit=should_exploit,
                   shared_actor=shared_actor)
     agent.run()
-
 
 def main(input_config=None):
     batch_queue_size = input_config['batch_queue_size']
@@ -120,13 +117,11 @@ def main(input_config=None):
 
     return shared_actor
 
-
 def timer(start, end):
     """ Helper to print training time """
     hours, rem = divmod(end - start, 3600)
     minutes, seconds = divmod(rem, 60)
     print("\nTraining Time:  {:0>2}:{:0>2}:{:05.2f}".format(int(hours), int(minutes), seconds))
-
 
 if __name__ == '__main__':
     try:

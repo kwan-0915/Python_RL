@@ -7,7 +7,7 @@ import argparse
 import multiprocessing as mp
 from time import sleep
 from datetime import datetime
-from utilities.agent import Agent
+from models.d3pg.agent import D3PGAgent
 from models.d3pg.d3pg import D3PG
 from models.d3pg.actor import Actor
 from utilities.replay_buffer import create_replay_buffer
@@ -72,7 +72,7 @@ def learner_worker(config, actor, target_actor, experiment_dir, shared_actor):
 
 @ray.remote
 def agent_worker(config, policy, i, agent_type, experiment_dir, should_exploit=False, shared_actor=None):
-    agent = Agent(config=config,
+    agent = D3PGAgent(config=config,
                   policy=policy,
                   n_agent=i,
                   agent_type=agent_type,

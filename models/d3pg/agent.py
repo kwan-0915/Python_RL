@@ -31,7 +31,7 @@ class D3PGAgent(Agent):
                 else:
                     action = action.detach().cpu().numpy().flatten()
 
-                next_state, reward, done, _ = self.env_wrapper.step(action)
+                next_state, reward, done = self.env_wrapper.step(action)
                 num_steps += 1
 
                 if num_steps == self.max_steps: done = True

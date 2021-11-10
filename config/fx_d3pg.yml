@@ -39,7 +39,7 @@ action_high: 1
 num_agents: 2
 
 # Training parameters
-model: ddpg
+model: d3pg
 batch_size: 256
 num_steps_train: 100_000 # number of episodes from all agents
 max_ep_length: 480 # maximum number of steps per episode
@@ -50,7 +50,7 @@ update_agent_ep: 1 # agent gets latest parameters from learner every update_agen
 replay_queue_size: 64 # queue with replays from all the agents
 batch_queue_size: 64 # queue with batches given to learner
 num_episode_save: 20
-device: cpu
+device: gpu
 agent_device: cpu
 save_reward_threshold: 0.01 # difference in best reward to save agent model
 replay_memory_prioritized: 0

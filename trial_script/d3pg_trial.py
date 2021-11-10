@@ -91,7 +91,6 @@ def main(input_config=None):
     num_asset = input_config['num_asset'] + int(input_config['add_cash_asset'])  # get num of asset for first dim of state and action for replay buffer
     n_features = input_config['n_features']
     seq_len = input_config["state_dim"]
-    state_dim = num_asset * input_config["state_dim"]
     action_dim = num_asset * input_config["action_dim"]
     batch_queue_size = input_config['batch_queue_size']
     n_agents = input_config['num_agents']

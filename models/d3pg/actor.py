@@ -51,12 +51,14 @@ class Actor(nn.Module):
         elif len(state.size()) == 2: rb_batch_size = state.size(0)
         else: raise ValueError('check input state shape: {}. sth wrong with state batch size.'.format(state.size()))
 
+        # print(state)
+        # print('Tensor size : ', state.size())
+        # print('Tensor shape : ', state.shape)
+        # raise ValueError
+
         # state = state.view((self.num_actions, self.seq_len, self.n_features))
 
         state = state.view((rb_batch_size * self.num_actions, self.seq_len, self.n_features))
-        # print(state.shape)
-        # print(state)
-        # raise ValueError
 
         # 2) pass into networks
         # conv1d input shape : [batch, n_features, seq_len]

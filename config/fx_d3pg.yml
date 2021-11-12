@@ -5,7 +5,7 @@ random_seed: 1983
 data_source: fx
 add_cash_asset: True
 start_date: 1/1/2015
-num_asset: 7
+num_asset: 1
 num_data: 6400
 window_length: 64
 ohlc_interval: 1h
@@ -40,10 +40,10 @@ num_agents: 2
 
 # Training parameters
 model: d3pg
-batch_size: 192          # batch_size = num_asset * state_dim
-num_steps_train: 100_000 # number of episodes from all agents
+batch_size: 48          # batch_size = num_asset * state_dim
+num_steps_train: 50000 # number of episodes from all agents
 max_ep_length: 480 # maximum number of steps per episode
-replay_mem_size: 1_000_000 # maximum capacity of replay memory
+replay_mem_size: 256 # maximum capacity of replay memory
 discount_rate: 0.99 # Discount rate (gamma) for future rewards
 n_step_returns: 1 # number of future steps to collect experiences for N-step returns
 update_agent_ep: 1 # agent gets latest parameters from learner every update_agent_ep episodes
@@ -54,6 +54,7 @@ device: cuda
 agent_device: cpu
 save_reward_threshold: 0.01 # difference in best reward to save agent model
 replay_memory_prioritized: 0
+save_buffer_on_disk: 0
 
 # Network parameters
 critic_learning_rate: 0.0005

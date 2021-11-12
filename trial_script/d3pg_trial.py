@@ -118,7 +118,7 @@ def main(input_config=None):
     agent_worker.remote(input_config, target_actor, 0, "exploitation", experiment_dir, True, shared_actor)
 
     # Agents (exploration processes)
-    for i in range(n_agents):
+    for i in range(1, n_agents):
         agent_worker.remote(input_config, actor_cpu, i, "exploration", experiment_dir, False, shared_actor)
 
     while not ray.get(shared_actor.get_child_threads.remote()): pass

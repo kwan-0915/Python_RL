@@ -10,17 +10,12 @@ def create_replay_buffer(config):
     if config['replay_memory_prioritized']:
         alpha = config['priority_alpha']
         return PrioritizedReplayBuffer(size=size, alpha=alpha)
+
     return BaseReplayBuffer(size)
 
 class BaseReplayBuffer(object):
     def __init__(self, size):
-        """
-        Create replay buffer.
-        Args:
-            size (int): max number of transitions to store in the buffer. When the buffer
-            overflows the old memories are dropped.
-        """
-        self._storage = []
+        self._storage = deque(maxlen=size)
         self._maxsize = size
         self._next_idx = 0
 
@@ -34,12 +29,9 @@ class BaseReplayBuffer(object):
 
         self._next_idx += 1
 
-    def remove(self, num_samples):
-        del self._storage[:num_samples]
-        self._next_idx = len(self._storage)
-
     def _encode_sample(self, idxes):
         obses_t, actions, rewards, obses_tp1, dones, gammas = [], [], [], [], [], []
+
         for i in idxes:
             data = self._storage[i]
             obs_t, action, reward, obs_tp1, done, gamma = data
@@ -49,8 +41,8 @@ class BaseReplayBuffer(object):
             obses_tp1.append(np.array(obs_tp1, copy=False))
             dones.append(done)
             gammas.append(gamma)
-        return [np.array(obses_t), np.array(actions), np.array(rewards), np.array(obses_tp1), np.array(dones), np.array(
-            gammas)]
+
+        return [np.array(obses_t), np.array(actions), np.array(rewards), np.array(obses_tp1), np.array(dones), np.array(gammas)]
 
     def sample(self, batch_size, **kwags):
         """Sample a batch of experiences.
@@ -77,12 +69,15 @@ class BaseReplayBuffer(object):
         idxes = [random.randint(0, len(self._storage) - 1) for _ in range(batch_size)]
         weights = np.zeros(len(idxes))
         inds = np.zeros(len(idxes))
+
         return self._encode_sample(idxes) + [weights, inds]
 
     def dump(self, save_dir):
         fn = os.path.join(save_dir, "replay_buffer.pkl")
+
         with open(fn, 'wb') as f:
             pickle.dump(self._storage, f)
+
         print(f"Buffer dumped to {fn}")
 
 class PrioritizedReplayBuffer(BaseReplayBuffer):
@@ -120,19 +115,16 @@ class PrioritizedReplayBuffer(BaseReplayBuffer):
         self._it_sum[idx] = self._max_priority ** self._alpha
         self._it_min[idx] = self._max_priority ** self._alpha
 
-    def remove(self, num_samples):
-        super().remove(num_samples)
-        self._it_sum.remove_items(num_samples)
-        self._it_min.remove_items(num_samples)
-
     def _sample_proportional(self, batch_size):
         res = []
         p_total = self._it_sum.sum(0, len(self._storage) - 1)
         every_range_len = p_total / batch_size
+
         for i in range(batch_size):
             mass = random.random() * every_range_len + i * every_range_len
             idx = self._it_sum.find_prefixsum_idx(mass)
             res.append(idx)
+
         return res
 
     def sample(self, batch_size, beta):
@@ -229,7 +221,7 @@ class SimpleReplayBuffer:
         #     self.storage.append(data)
 
     def sample(self, batch_size):
-        ind = np.random.randint(0, len(self.storage), size=batch_size)
+        ind = np.random.randint(0, len(self.storage) - 1, size=batch_size)
         x, y, u, r, d = [], [], [], [], []
 
         for i in ind:

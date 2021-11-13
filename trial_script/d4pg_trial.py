@@ -1,11 +1,11 @@
 import os
+import sys
 import ray
 import copy
 import yaml
 import time
 import argparse
 import multiprocessing as mp
-from time import sleep
 from datetime import datetime
 from models.d3pg.agent import D3PGAgent
 from models.d4pg.d4pg import D4PG
@@ -39,18 +39,18 @@ def sampler_worker(config, shared_actor, log_dir=''):
         if len(replay_buffer) < batch_size:
             continue
 
-        try:
-            inds, weights = ray.get(shared_actor.get_queue.remote("replay_priorities_queue")).pop()
-            replay_buffer.update_priorities(inds, weights)
-        except IndexError:
-            pass
-
-        try:
-            batch = replay_buffer.sample(batch_size)
-            shared_actor.append.remote("batch_queue", batch)
-        except KeyError:
-            sleep(0.1)
-            continue
+        if config['replay_memory_prioritized']:
+            try:
+                inds, weights = ray.get(shared_actor.get_queue.remote("replay_priorities_queue")).pop()
+                replay_buffer.update_priorities(inds, weights)
+            except IndexError:
+                sys.exit('Cannot load priority replay buffer')
+        else:
+            try:
+                batch = replay_buffer.sample(batch_size)
+                shared_actor.append.remote("batch_queue", batch)
+            except KeyError:
+                sys.exit('Batch Queue must not be None')
 
         # Log data structures sizes
         step = ray.get(shared_actor.get_update_step.remote())

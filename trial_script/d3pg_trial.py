@@ -72,12 +72,12 @@ def learner_worker(config, actor, target_actor, experiment_dir, shared_actor):
 @ray.remote
 def agent_worker(config, policy, i, agent_type, experiment_dir, should_exploit=False, shared_actor=None):
     agent = D3PGAgent(config=config,
-                  policy=policy,
-                  n_agent=i,
-                  agent_type=agent_type,
-                  log_dir=experiment_dir,
-                  should_exploit=should_exploit,
-                  shared_actor=shared_actor)
+                      policy=policy,
+                      n_agent=i,
+                      agent_type=agent_type,
+                      log_dir=experiment_dir,
+                      should_exploit=should_exploit,
+                      shared_actor=shared_actor)
     agent.run()
 
 def timer(start, end):
@@ -88,27 +88,23 @@ def timer(start, end):
 
 def main(input_config=None):
     num_asset = input_config['num_asset'] + int(input_config['add_cash_asset'])  # get num of asset for first dim of state and action for replay buffer
-    n_features = input_config['n_features']
-    seq_len = input_config["state_dim"]
     action_dim = num_asset * input_config["action_dim"]
-    batch_queue_size = input_config['batch_queue_size']
-    n_agents = input_config['num_agents']
 
     # Create directory for experiment
     experiment_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/" + f"{config['results_path']}/{config['env']}-{config['model']}-{datetime.now():%Y-%m-%d_%H-%M-%S}"
     if not os.path.exists(experiment_dir): os.makedirs(experiment_dir)
 
     # Shared object
-    shared_actor = SharedActor.remote(replay_queue_size=64, learner_w_queue_size=n_agents, replay_priorities_queue_size=64,
-                                      batch_queue_size=batch_queue_size, training_on=1, update_step=0, global_episode=0, n_threads=config['n_threads'])
+    shared_actor = SharedActor.remote(replay_queue_size=input_config['replay_queue_size'], learner_w_queue_size=input_config['num_agents'], replay_priorities_queue_size=input_config['replay_priorities_queue_size'],
+                                      batch_queue_size=input_config['batch_queue_size'], training_on=1, update_step=0, global_episode=0, n_threads=config['n_threads'])
 
     # Data sampler
     sampler_worker.remote(input_config, shared_actor, experiment_dir)
 
     # Learner (neural net training process)
-    target_actor = Actor(n_features, seq_len, action_dim, input_config['dense_size'], device=input_config['device'])
+    target_actor = Actor(input_config['n_features'], input_config["state_dim"], action_dim, input_config['dense_size'], device=input_config['device'])
     actor = copy.deepcopy(target_actor)
-    actor_cpu = Actor(n_features, seq_len, action_dim, input_config['dense_size'], device=input_config['agent_device'])
+    actor_cpu = Actor(input_config['n_features'], input_config["state_dim"], action_dim, input_config['dense_size'], device=input_config['agent_device'])
     target_actor.share_memory()
 
     learner_worker.remote(input_config, actor, target_actor, experiment_dir, shared_actor)
@@ -117,7 +113,7 @@ def main(input_config=None):
     agent_worker.remote(input_config, target_actor, 0, "exploitation", experiment_dir, True, shared_actor)
 
     # Agents (exploration processes)
-    for i in range(1, n_agents):
+    for i in range(1, input_config['num_agents']):
         agent_worker.remote(input_config, actor_cpu, i, "exploration", experiment_dir, False, shared_actor)
 
     while not ray.get(shared_actor.get_child_threads.remote()): pass

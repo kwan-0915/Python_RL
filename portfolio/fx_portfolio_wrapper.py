@@ -44,9 +44,9 @@ class FXPortfolioWrapper(ABCEnvWrapper):
     @staticmethod
     def preprocess_state(state):
         # 1) base settings
-        seq_len = 24
         close_price = state[:, :, 3]
         local_config = FXPortfolioWrapper.global_config
+        seq_len = local_config['state_dim']
         expected_indicators = local_config['indicators']
         feat_controller = FeatController(ohlcv_data=state, indicators=expected_indicators)
 

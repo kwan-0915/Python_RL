@@ -1,11 +1,12 @@
 import os
+import sys
+
 import ray
 import copy
 import yaml
 import time
 import argparse
 import multiprocessing as mp
-from time import sleep
 from datetime import datetime
 from models.d3pg.agent import D3PGAgent
 from models.d3pg.d3pg import D3PG
@@ -22,7 +23,7 @@ def sampler_worker(config, shared_actor, log_dir=''):
     batch_size = config['batch_size']
 
     # Logger
-    logger = Logger(f"{log_dir}/data_struct")
+    # logger = Logger(f"{log_dir}/data_struct")
 
     # Create replay buffer
     replay_buffer = create_replay_buffer(config)
@@ -49,18 +50,16 @@ def sampler_worker(config, shared_actor, log_dir=''):
             batch = replay_buffer.sample(batch_size)
             shared_actor.append.remote("batch_queue", batch)
         except KeyError:
-            sleep(0.1)
-            continue
+            sys.exit('Batch Queue must not be None')
 
         # Log data structures sizes
-        step = ray.get(shared_actor.get_update_step.remote())
-        logger.scalar_summary("data_struct/global_episode", ray.get(shared_actor.get_global_episode.remote()), step)
-        logger.scalar_summary("data_struct/replay_queue", len(ray.get(shared_actor.get_queue.remote("replay_queue"))), step)
-        logger.scalar_summary("data_struct/batch_queue", len(ray.get(shared_actor.get_queue.remote("batch_queue"))), step)
-        logger.scalar_summary("data_struct/replay_buffer", len(replay_buffer), step)
+        # step = ray.get(shared_actor.get_update_step.remote())
+        # logger.scalar_summary("data_struct/global_episode", ray.get(shared_actor.get_global_episode.remote()), step)
+        # logger.scalar_summary("data_struct/replay_queue", len(ray.get(shared_actor.get_queue.remote("replay_queue"))), step)
+        # logger.scalar_summary("data_struct/batch_queue", len(ray.get(shared_actor.get_queue.remote("batch_queue"))), step)
+        # logger.scalar_summary("data_struct/replay_buffer", len(replay_buffer), step)
 
-    if config['save_buffer_on_disk']:
-        replay_buffer.dump(config["results_path"])
+    if config['save_buffer_on_disk']: replay_buffer.dump(config["results_path"])
 
     print("Stop sampler worker.")
     shared_actor.set_child_threads.remote()
@@ -132,6 +131,8 @@ if __name__ == '__main__':
         mp.set_start_method('spawn')
     except RuntimeError:
         pass
+
+    print('PID for main thread : ', os.getpid())
 
     parser = argparse.ArgumentParser(description='')
     parser.add_argument("--config_file", type=str, help="Config file path")

@@ -5,7 +5,7 @@ random_seed: 1983
 data_source: fx
 add_cash_asset: True
 start_date: 1/1/2015
-num_asset: 1
+num_asset: 2
 num_data: 6400
 window_length: 64
 ohlc_interval: 1h
@@ -43,7 +43,7 @@ num_agents: 2
 
 # Training parameters
 model: d3pg
-batch_size: 144          # batch_size = n_features * num_asset * state_dim
+batch_size: 216          # batch_size = n_features * num_asset * state_dim
 num_steps_train: 50000 # number of episodes from all agents
 max_ep_length: 480 # maximum number of steps per episode
 replay_mem_size: 1000 # maximum capacity of replay memory

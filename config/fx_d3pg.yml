@@ -5,11 +5,14 @@ random_seed: 1983
 data_source: fx
 add_cash_asset: True
 start_date: 1/1/2015
-num_asset: 2
+num_asset: 1
 num_data: 6400
 window_length: 64
 ohlc_interval: 1h
 file_extension: .csv
+
+# Ray settings
+dashboard_port: 9527
 
 # TA-LIB
 indicators:
@@ -40,8 +43,8 @@ num_agents: 2
 
 # Training parameters
 model: d3pg
-batch_size: 216          # batch_size = n_features * num_asset * state_dim
-num_steps_train: 100_000 # number of episodes from all agents
+batch_size: 144          # batch_size = n_features * num_asset * state_dim
+num_steps_train: 50000 # number of episodes from all agents
 max_ep_length: 480 # maximum number of steps per episode
 replay_mem_size: 1_000_000 # maximum capacity of replay memory
 discount_rate: 0.99 # Discount rate (gamma) for future rewards

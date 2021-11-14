@@ -144,7 +144,7 @@ if __name__ == '__main__':
     with open(inputs['config_file'], "r") as file:
         config = yaml.load(file, Loader=yaml.SafeLoader)
         config['path'] = inputs['data_file']
-        ray.init(num_cpus=inputs['num_cpus'], num_gpus=inputs['num_gpus'])
+        ray.init(num_cpus=inputs['num_cpus'], num_gpus=inputs['num_gpus'], dashboard_port=inputs['dashboard_port'])
         shared_actor = main(input_config=config)
 
     while not ray.get(shared_actor.get_main_thread.remote()): pass

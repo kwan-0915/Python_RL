@@ -5,7 +5,7 @@ random_seed: 1983
 data_source: fx
 add_cash_asset: True
 start_date: 1/1/2015
-num_asset: 2
+num_asset: 7
 num_data: 6400
 window_length: 64
 ohlc_interval: 1h
@@ -22,19 +22,19 @@ indicators:
      - log_return
      - above_mean
      - norm_price
-#     - mov_avg_5
-#     - rsi
+     - mov_avg_5
+     - rsi
 #     - macd_hist
 #     - stochastic
 #     - stochRSI
 #     - spinning_top
-#     - hikkake
+     - hikkake
 
 # Environment parameters
 env: FX
-trading_cost: 0.0 # 0.0005
+trading_cost: 0.0005 # 0.0005
 time_cost: 0
-n_features: 3
+n_features: 6
 state_dim: 24 # state_dim / asset
 action_dim: 1 # action_dim / asset
 action_low: -1
@@ -43,17 +43,17 @@ num_agents: 2
 
 # Training parameters
 model: d3pg
-batch_size: 216          # batch_size = n_features * num_asset * state_dim
-num_steps_train: 50000 # number of episodes from all agents
+batch_size: 1152          # batch_size = n_features * num_asset * state_dim
+num_steps_train: 100_000 # number of episodes from all agents
 max_ep_length: 480 # maximum number of steps per episode
-replay_mem_size: 1000 # maximum capacity of replay memory
+replay_mem_size: 1500 # maximum capacity of replay memory
 discount_rate: 0.99 # Discount rate (gamma) for future rewards
 n_step_returns: 1 # number of future steps to collect experiences for N-step returns
 update_agent_ep: 1 # agent gets latest parameters from learner every update_agent_ep episodes
 replay_queue_size: 64 # queue with replays from all the agents
 batch_queue_size: 64 # queue with batches given to learner
 replay_priorities_queue_size: 64
-num_episode_save: 20
+num_episode_save: 100
 device: cuda
 agent_device: cpu
 save_reward_threshold: 0.01 # difference in best reward to save agent model

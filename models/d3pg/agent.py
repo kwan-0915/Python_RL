@@ -66,8 +66,8 @@ class D3PGAgent(Agent):
 
             # Saving agent
             reward_outperformed = episode_reward - best_reward > self.config["save_reward_threshold"]
-            # time_to_save = self.local_episode % self.num_episode_save == 0
-            if self.agent_type == 'exploitation' and (self.local_episode == 1 or reward_outperformed):
+            time_to_save = self.local_episode % self.num_episode_save == 0
+            if self.agent_type == 'exploitation' and (self.local_episode == 1 or reward_outperformed or time_to_save):
                 if episode_reward > best_reward:
                     best_reward = episode_reward
 

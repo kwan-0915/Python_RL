@@ -35,6 +35,7 @@ env: FX
 trading_cost: 0.0 # 0.0005
 time_cost: 0
 n_features: 3
+num_rand_feat: 0
 state_dim: 24 # state_dim / asset
 action_dim: 1 # action_dim / asset
 action_low: -1

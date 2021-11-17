@@ -16,25 +16,25 @@ dashboard_port: 9527
 
 # TA-LIB
 indicators:
-#    - god_price
-#     - god_return
-#     - god_future_dir
-     - log_return
-     - above_mean
-     - norm_price
-     - mov_avg_5
-     - rsi
+     - god_price
+     - god_return
+     - god_future_dir
+#     - log_return
+#     - above_mean
+#     - norm_price
+#     - mov_avg_5
+#     - rsi
 #     - macd_hist
 #     - stochastic
 #     - stochRSI
 #     - spinning_top
-     - hikkake
+#     - hikkake
 
 # Environment parameters
 env: FX
 trading_cost: 0.0005 # 0.0005
 time_cost: 0
-n_features: 6
+n_features: 3
 state_dim: 24 # state_dim / asset
 action_dim: 1 # action_dim / asset
 action_low: -1
@@ -43,10 +43,10 @@ num_agents: 2
 
 # Training parameters
 model: d3pg
-batch_size: 1152          # batch_size = n_features * num_asset * state_dim
+batch_size: 576          # batch_size = n_features * num_asset * state_dim
 num_steps_train: 100_000 # number of episodes from all agents
 max_ep_length: 480 # maximum number of steps per episode
-replay_mem_size: 1500 # maximum capacity of replay memory
+replay_mem_size: 1_000 # maximum capacity of replay memory
 discount_rate: 0.99 # Discount rate (gamma) for future rewards
 n_step_returns: 1 # number of future steps to collect experiences for N-step returns
 update_agent_ep: 1 # agent gets latest parameters from learner every update_agent_ep episodes

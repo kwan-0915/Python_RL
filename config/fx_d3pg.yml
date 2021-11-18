@@ -45,7 +45,7 @@ num_agents: 2
 # Training parameters
 model: d3pg
 batch_size: 144          # batch_size = n_features * num_asset * state_dim
-num_steps_train: 50000 # number of episodes from all agents
+num_steps_train: 10000 # number of episodes from all agents
 max_ep_length: 480 # maximum number of steps per episode
 replay_mem_size: 1000 # maximum capacity of replay memory
 discount_rate: 0.99 # Discount rate (gamma) for future rewards

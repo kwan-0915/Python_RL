@@ -87,18 +87,18 @@ class D3PGReplayBuffer(BaseReplayBuffer):
         self._next_idx += 1
 
     def _encode_sample(self, indies):
-        state, action, reward, next_state, done = [] * 5
+        states, actions, rewards, next_states, dones = [], [], [], [], []
 
         for index in indies:
             data = self._storage[index]
             state, action, reward, next_state, done = data
-            state.append(np.array(state, copy=False))
-            action.append(np.array(action, copy=False))
-            reward.append(reward)
-            next_state.append(np.array(next_state, copy=False))
-            done.append(done)
+            states.append(np.array(state, copy=False))
+            actions.append(np.array(action, copy=False))
+            rewards.append(reward)
+            next_states.append(np.array(next_state, copy=False))
+            dones.append(done)
 
-        return [np.array(state), np.array(action), np.array(reward), np.array(next_state), np.array(done)]
+        return [np.array(states), np.array(actions), np.array(rewards), np.array(next_states), np.array(dones)]
 
     def sample(self, batch_size, **kwags):
         idxes = [random.randint(0, len(self._storage) - 1) for _ in range(batch_size)]

@@ -26,7 +26,7 @@ def sampler_worker(config, shared_actor, log_dir=''):
     logger = Logger(f"{log_dir}/data_struct")
 
     # Create replay buffer
-    replay_buffer = D3PGReplayBuffer(config)
+    replay_buffer = D3PGReplayBuffer(int(config['replay_mem_size']))
 
     while ray.get(shared_actor.get_training_on.remote()):
         # (1) Transfer replays to global buffer
@@ -141,7 +141,7 @@ if __name__ == '__main__':
     with open(inputs['config_file'], "r") as file:
         config = yaml.load(file, Loader=yaml.SafeLoader)
         config['path'] = inputs['data_file']
-        ray.init(num_cpus=inputs['num_cpus'], num_gpus=inputs['num_gpus'], logging_level=logging.CRITICAL)
+        ray.init(num_cpus=inputs['num_cpus'], num_gpus=inputs['num_gpus'])
         shared_actor = main(input_config=config)
 
     while not ray.get(shared_actor.get_main_thread.remote()): pass

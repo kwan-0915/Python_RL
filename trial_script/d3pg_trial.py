@@ -11,7 +11,7 @@ from datetime import datetime
 from models.d3pg.agent import D3PGAgent
 from models.d3pg.d3pg import D3PG
 from models.d3pg.actor import Actor
-from utilities.replay_buffer import create_replay_buffer
+from utilities.replay_buffer import D3PGReplayBuffer
 from utilities.shared_actor import SharedActor
 from utilities.logger import Logger
 
@@ -26,7 +26,7 @@ def sampler_worker(config, shared_actor, log_dir=''):
     logger = Logger(f"{log_dir}/data_struct")
 
     # Create replay buffer
-    replay_buffer = create_replay_buffer(config)
+    replay_buffer = D3PGReplayBuffer(config)
 
     while ray.get(shared_actor.get_training_on.remote()):
         # (1) Transfer replays to global buffer

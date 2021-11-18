@@ -54,7 +54,7 @@ def main(config, model):
                 next_state, reward, done, info = env.step(action)
 
                 if args.render and i >= args.render_interval: env.render()
-                agent.replay_buffer.push((state, next_state, action, reward, np.float64(done)))
+                agent.replay_buffer.add((state, next_state, action, reward, np.float64(done)))
                 state = next_state
                 if done: break
 

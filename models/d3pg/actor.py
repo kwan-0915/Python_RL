@@ -25,8 +25,8 @@ class Actor(nn.Module):
         k_size = 3
         n_layer = 2
         conv_output_size = seq_len
-        for i in range(n_layer):
-            conv_output_size = conv_output_size - k_size + 1
+        for i in range(n_layer): conv_output_size = conv_output_size - k_size + 1
+
         conv_output_size = int(conv_output_size / k_size)  # max pool output size
 
         self.conv1d1 = nn.Conv1d(n_features, conv_channel_size, kernel_size=k_size)

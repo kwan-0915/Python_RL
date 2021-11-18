@@ -17,7 +17,6 @@ class D3PG(object):
     def __init__(self, config, actor, target_actor, shared_actor, log_dir=''):
         num_asset = config['num_asset'] + int(config['add_cash_asset'])  # get num of asset for first dim of state and action for replay buffer
         hidden_dim = config['dense_size']
-        state_dim = num_asset * config["state_dim"]
         action_dim = num_asset * config["action_dim"]
         critic_lr = config['critic_learning_rate']
         actor_lr = config['actor_learning_rate']
@@ -67,8 +66,8 @@ class D3PG(object):
         # Move to CUDA
         state = torch.from_numpy(state_c).float().to(self.device)
         action = torch.from_numpy(action_c).float().to(self.device)
-        next_state = torch.from_numpy(reward_c).float().to(self.device)
-        reward = torch.from_numpy(next_state_c).float().to(self.device)
+        reward = torch.from_numpy(reward_c).float().to(self.device)
+        next_state = torch.from_numpy(next_state_c).float().to(self.device)
         done = torch.from_numpy(done_c).float().to(self.device)
 
         # ------- Update critic -------

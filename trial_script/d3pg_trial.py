@@ -4,7 +4,6 @@ import ray
 import copy
 import yaml
 import time
-import glob
 import argparse
 import multiprocessing as mp
 from datetime import datetime

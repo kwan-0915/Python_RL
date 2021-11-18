@@ -4,6 +4,15 @@ from utilities.agent import Agent
 
 class D3PGAgent(Agent):
 
+    def __init__(self, config, policy, n_agent=0, agent_type='exploration', log_dir='', should_exploit=False, shared_actor=None):
+        super(D3PGAgent, self).__init__(config,
+                                        policy,
+                                        n_agent,
+                                        agent_type,
+                                        log_dir,
+                                        should_exploit,
+                                        shared_actor)
+
     def run(self):
         best_reward = -float("inf")
         rewards = []
@@ -79,3 +88,17 @@ class D3PGAgent(Agent):
 
         print("Agent [", self.agent_type, "]", {self.n_agent}, " done.")
         self.shared_actor.set_child_threads.remote()
+
+    def save_plot(self):
+        state = self.env_wrapper.reset()
+        total_reward = 0
+        for step in range(self.max_steps):
+            action = self.actor.get_action(state)
+            action = action.cpu().detach().numpy().squeeze()
+            next_state, reward, done, info = self.env_wrapper.step(action)
+            total_reward += reward
+            state = next_state
+            if done: break
+
+        print("total rewards: {}".format(total_reward))
+        self.env_wrapper.plot()

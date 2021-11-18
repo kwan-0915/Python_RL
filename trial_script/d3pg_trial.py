@@ -1,19 +1,19 @@
-import logging
 import os
 import sys
 import ray
 import copy
 import yaml
 import time
+import glob
 import argparse
 import multiprocessing as mp
 from datetime import datetime
-from models.d3pg.agent import D3PGAgent
 from models.d3pg.d3pg import D3PG
 from models.d3pg.actor import Actor
+from models.d3pg.agent import D3PGAgent
+from utilities.logger import Logger
 from utilities.replay_buffer import D3PGReplayBuffer
 from utilities.shared_actor import SharedActor
-from utilities.logger import Logger
 
 @ray.remote
 def sampler_worker(config, shared_actor, log_dir=''):
@@ -123,6 +123,27 @@ def main(input_config=None):
 
     return shared_actor
 
+def eval(config):
+    import torch
+
+    agent_dir = config['entry_dir'] + '\\agent_exploitation_0\\'
+    eval_dir = os.path.join(config['entry_dir'], r'evaluation')
+    if not os.path.exists(eval_dir): os.makedirs(eval_dir)
+
+    checkpoint_dir = sorted(os.listdir(agent_dir), key=lambda filename: filename.split('_')[4])[-1]
+    checkpoint_dir = os.path.join(agent_dir, checkpoint_dir)
+    print('Loading checkpoint file: ', checkpoint_dir)
+    trained_policy_actor = torch.load(checkpoint_dir)
+    print(trained_policy_actor)
+
+    eval_agent = D3PGAgent(config,
+                           policy=trained_policy_actor,
+                           n_agent=0,
+                           agent_type="exploitation",
+                           log_dir=eval_dir)
+
+    eval_agent.save_plot()
+
 if __name__ == '__main__':
     try:
         mp.set_start_method('spawn')
@@ -130,24 +151,35 @@ if __name__ == '__main__':
         pass
 
     parser = argparse.ArgumentParser(description='')
+    parser.add_argument("--mode", type=str, help="Train or Eval")
     parser.add_argument("--config_file", type=str, help="Config file path")
     parser.add_argument("--num_cpus", type=int, help="Number of available CPUs")
     parser.add_argument("--num_gpus", type=int, help="Number of available GPUs")
     parser.add_argument("--data_file", type=str, help="Abs path for csv file")
+    parser.add_argument("--result_file", type=str, help="Abs path for csv file", required=False)
     inputs = vars(parser.parse_args())
 
-    t0 = time.time()
+    if inputs['mode'] == 'train':
+        t0 = time.time()
 
-    with open(inputs['config_file'], "r") as file:
-        config = yaml.load(file, Loader=yaml.SafeLoader)
-        config['path'] = inputs['data_file']
-        ray.init(num_cpus=inputs['num_cpus'], num_gpus=inputs['num_gpus'])
-        shared_actor = main(input_config=config)
+        with open(inputs['config_file'], "r") as file:
+            config = yaml.load(file, Loader=yaml.SafeLoader)
+            config['path'] = inputs['data_file']
+            ray.init(num_cpus=inputs['num_cpus'], num_gpus=inputs['num_gpus'])
+            shared_actor = main(input_config=config)
 
-    while not ray.get(shared_actor.get_main_thread.remote()): pass
+        while not ray.get(shared_actor.get_main_thread.remote()): pass
 
-    t1 = time.time()
-    time.sleep(1.5)
-    timer(t0, t1)
+        t1 = time.time()
+        time.sleep(1.5)
+        timer(t0, t1)
 
-    print('End main thread')
+        print('End main thread')
+
+    else:
+        with open(inputs['config_file'], "r") as file:
+            config = yaml.load(file, Loader=yaml.SafeLoader)
+            config['path'] = inputs['data_file']
+            config['entry_dir'] = inputs['result_file']
+            eval(config)
+

@@ -25,8 +25,8 @@ class Critic(nn.Module):
         k_size = 3
         n_layer = 2
         conv_output_size = seq_len
-        for i in range(n_layer):
-            conv_output_size = conv_output_size - k_size + 1
+        for i in range(n_layer): conv_output_size = conv_output_size - k_size + 1
+
         conv_output_size = int(conv_output_size / k_size)  # max pool output size
 
         self.conv1d1 = nn.Conv1d(n_features, conv_channel_size, kernel_size=k_size)
@@ -67,14 +67,11 @@ class Critic(nn.Module):
 
         # 1) reshape the state (num_assets, seq_len, n_features) to LSTM input (batch, seq_len, n_features)
         # a) handling replay buffer batch
-        if len(state.size()) == 1:
-            rb_batch_size = 1
-        elif len(state.size()) == 2:
-            rb_batch_size = state.size()[0]
-        else:
-            raise ValueError('check input state shape: {}. sth wrong with state batch size.'.format(state.size()))
+        if len(state.size()) == 1: rb_batch_size = 1
+        elif len(state.size()) == 2: rb_batch_size = state.size()[0]
+        else: raise ValueError('check input state shape: {}. sth wrong with state batch size.'.format(state.size()))
 
-            # state = state.view((self.num_actions, self.seq_len, self.n_features))
+        # state = state.view((self.num_actions, self.seq_len, self.n_features))
         state = state.view((rb_batch_size * self.num_actions, self.seq_len, self.n_features))
 
         x = self.conv1d1(state.permute(0, 2, 1))

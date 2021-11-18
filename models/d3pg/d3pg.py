@@ -6,7 +6,6 @@ import time
 import numpy as np
 import torch.nn as nn
 import torch.optim as optim
-from copy import deepcopy
 from models.d3pg.critic import Critic
 from utilities.ou_noise import OUNoise
 from utilities.logger import Logger
@@ -17,7 +16,6 @@ class D3PG(object):
     def __init__(self, config, actor, target_actor, shared_actor, log_dir=''):
         num_asset = config['num_asset'] + int(config['add_cash_asset'])  # get num of asset for first dim of state and action for replay buffer
         hidden_dim = config['dense_size']
-        state_dim = num_asset * config["state_dim"]
         action_dim = num_asset * config["action_dim"]
         critic_lr = config['critic_learning_rate']
         actor_lr = config['actor_learning_rate']
@@ -56,20 +54,26 @@ class D3PG(object):
     def _update_step(self, batch, min_value=-np.inf, max_value=np.inf):
         update_time = time.time()
 
-        state, action, reward, next_state, done, _, _, _ = batch
+        state, action, reward, next_state, done = batch
 
-        state_c = deepcopy(state)
-        action_c = deepcopy(action)
-        reward_c = deepcopy(reward)
-        next_state_c = deepcopy(next_state)
-        done_c = deepcopy(done)
+        # state_c = deepcopy(state)
+        # action_c = deepcopy(action)
+        # reward_c = deepcopy(reward)
+        # next_state_c = deepcopy(next_state)
+        # done_c = deepcopy(done)
+        #
+        # # Move to CUDA
+        # state = torch.from_numpy(state_c).float().to(self.device)
+        # action = torch.from_numpy(action_c).float().to(self.device)
+        # reward = torch.from_numpy(reward_c).float().to(self.device)
+        # next_state = torch.from_numpy(next_state_c).float().to(self.device)
+        # done = torch.from_numpy(done_c).float().to(self.device)
 
-        # Move to CUDA
-        state = torch.from_numpy(state_c).float().to(self.device)
-        action = torch.from_numpy(action_c).float().to(self.device)
-        next_state = torch.from_numpy(reward_c).float().to(self.device)
-        reward = torch.from_numpy(next_state_c).float().to(self.device)
-        done = torch.from_numpy(done_c).float().to(self.device)
+        state = torch.from_numpy(state).float().to(self.device)
+        action = torch.from_numpy(action).float().to(self.device)
+        reward = torch.from_numpy(reward).float().to(self.device)
+        next_state = torch.from_numpy(next_state).float().to(self.device)
+        done = torch.from_numpy(done).float().to(self.device)
 
         # ------- Update critic -------
         next_action = self.target_actor(next_state)

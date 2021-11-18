@@ -2,10 +2,8 @@ import os
 import ray
 import sys
 import torch
-import shutil
 from collections import deque
 from utilities.utils import create_env_wrapper
-from utilities.visualization import make_gif
 from utilities.ou_noise import OUNoise
 from utilities.logger import Logger
 
@@ -24,7 +22,7 @@ class Agent(object):
         self.local_episode = 0
         self.should_exploit = should_exploit
         self.shared_actor = shared_actor
-        self.global_episode = ray.get(self.shared_actor.get_global_episode.remote())
+        self.global_episode = ray.get(self.shared_actor.get_global_episode.remote()) if self.shared_actor is not None else None
         self.exp_buffer = deque()  # Initialise deque buffer to store experiences for N-step returns
 
         # Logging
@@ -80,25 +78,5 @@ class Agent(object):
         model_fn = f"{process_dir}/{checkpoint_name}.pt"
         torch.save(self.actor, model_fn)
 
-    def save_replay_gif(self, output_dir_name):
-        import matplotlib.pyplot as plt
-
-        dir_name = output_dir_name
-        if not os.path.exists(dir_name):
-            os.makedirs(dir_name)
-
-        state = self.env_wrapper.reset()
-        for step in range(self.max_steps):
-            action = self.actor.get_action(state)
-            action = action.cpu().detach().numpy()
-            next_state, reward, done = self.env_wrapper.step(action)
-            img = self.env_wrapper.render()
-            plt.imsave(fname=f"{dir_name}/{step}.png", arr=img)
-            state = next_state
-            if done:
-                break
-
-        fn = f"{self.config['env']}-{self.config['model']}-{step}.gif"
-        make_gif(dir_name, f"{self.log_dir}/{fn}")
-        shutil.rmtree(dir_name, ignore_errors=False, onerror=None)
-        print("fig saved to ", f"{self.log_dir}/{fn}")
+    def save_plot(self):
+        pass

@@ -5,7 +5,7 @@ import torch.nn.functional as F
 class Critic(nn.Module):
     """Critic - return Q value from given states and actions. """
 
-    def __init__(self, n_features, seq_len, num_actions, hidden_size, init_w=3e-3, device='cuda'):
+    def __init__(self, n_features, seq_len, num_actions, hidden_size, device, conv_channel_size, kernel_size, n_layer, init_w):
         """
         Args:
             num_states (int): state dimension
@@ -21,17 +21,14 @@ class Critic(nn.Module):
         self.num_actions = num_actions
         self.hidden_size = hidden_size
 
-        conv_channel_size = 32
-        k_size = 3
-        n_layer = 2
         conv_output_size = seq_len
-        for i in range(n_layer): conv_output_size = conv_output_size - k_size + 1
+        for i in range(n_layer): conv_output_size = conv_output_size - kernel_size + 1
 
-        conv_output_size = int(conv_output_size / k_size)  # max pool output size
+        conv_output_size = int(conv_output_size / kernel_size)  # max pool output size
 
-        self.conv1d1 = nn.Conv1d(n_features, conv_channel_size, kernel_size=k_size)
-        self.conv1d2 = nn.Conv1d(conv_channel_size, conv_channel_size, kernel_size=k_size)
-        self.max_pooling1d1 = nn.MaxPool1d(kernel_size=k_size)
+        self.conv1d1 = nn.Conv1d(n_features, conv_channel_size, kernel_size=kernel_size)
+        self.conv1d2 = nn.Conv1d(conv_channel_size, conv_channel_size, kernel_size=kernel_size)
+        self.max_pooling1d1 = nn.MaxPool1d(kernel_size=kernel_size)
         self.dropout = nn.Dropout(0.5)
         self.linear2 = nn.Linear(num_actions * conv_channel_size * conv_output_size + num_actions, hidden_size)
 

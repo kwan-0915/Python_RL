@@ -102,9 +102,11 @@ def main(input_config=None):
     sampler_worker.remote(input_config, shared_actor, experiment_dir)
 
     # Learner (neural net training process)
-    target_actor = Actor(input_config['n_features'], input_config["state_dim"], action_dim, input_config['dense_size'], device=input_config['device'])
+    target_actor = Actor(input_config['n_features'], input_config["state_dim"], action_dim, input_config['dense_size'], device=input_config['device'], conv_channel_size=input_config['conv_channel_size'],
+                         kernel_size=input_config['kernel_size'], n_layer=input_config['n_layer'], init_w=input_config['init_w'])
     actor = copy.deepcopy(target_actor)
-    actor_cpu = Actor(input_config['n_features'], input_config["state_dim"], action_dim, input_config['dense_size'], device=input_config['agent_device'])
+    actor_cpu = Actor(input_config['n_features'], input_config["state_dim"], action_dim, input_config['dense_size'], device=input_config['agent_device'], conv_channel_size=input_config['conv_channel_size'],
+                      kernel_size=input_config['kernel_size'], n_layer=input_config['n_layer'], init_w=input_config['init_w'])
     target_actor.share_memory()
 
     learner_worker.remote(input_config, actor, target_actor, experiment_dir, shared_actor)

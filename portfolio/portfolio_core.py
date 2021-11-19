@@ -1,9 +1,8 @@
 import gym
 import numpy as np
 import pandas as pd
-from pprint import pprint
-
 import utilities.visualization
+from pprint import pprint
 from utilities import utils
 from signals.signals_controller import SignalsController
 from portfolio.portfolio_simulator import PortfolioSimulator

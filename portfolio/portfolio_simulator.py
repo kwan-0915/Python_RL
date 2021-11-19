@@ -16,7 +16,7 @@ class PortfolioSimulator(object):
         self.cost = self.config['trading_cost']
         self.time_cost = self.config['time_cost']
         self.steps = self.config['max_ep_length']
-        self.infos = []
+        # self.infos = []
         # if have cash asset, initial weight should be [1, 0, 0, ....]
         self.w0 = self._init_weights()
         self.dw = self._init_weights()  # w_prime record the weight change in the period
@@ -93,12 +93,12 @@ class PortfolioSimulator(object):
             "weights_std": w1.std(),
             "cost": mu1,
         }
-        self.infos.append(info)
+        # self.infos.append(info)
 
         return reward, info, done
 
     def reset(self):
-        self.infos.clear()
+        # self.infos.clear()
         self.w0 = self._init_weights()
         self.dw = self._init_weights()
         self.p_rtn_history.clear()

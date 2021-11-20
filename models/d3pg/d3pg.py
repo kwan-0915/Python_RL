@@ -7,7 +7,6 @@ import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 from models.d3pg.critic import Critic
-from utilities.ou_noise import OUNoise
 from utilities.logger import Logger
 
 class D3PG(object):
@@ -28,9 +27,6 @@ class D3PG(object):
         # Logging
         self.log_dir = log_dir
         self.logger = Logger(f"{log_dir}/learner")
-
-        # Noise process
-        self.ou_noise = OUNoise(dim=config["action_dim"], low=config["action_low"], high=config["action_high"])
 
         # Base Actor and Critic
         self.actor = actor

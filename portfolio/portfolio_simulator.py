@@ -1,7 +1,5 @@
 import numpy as np
 
-eps = 1e-8
-
 class PortfolioSimulator(object):
     """
     Portfolio management sim.
@@ -21,9 +19,9 @@ class PortfolioSimulator(object):
         self.w0 = self._init_weights()
         self.dw = self._init_weights()  # w_prime record the weight change in the period
         self.p0 = 1.0
-        self.l2 = 0.3  # lambda of risk regularization penalty
-        self.p_rtn_history = list()  # store log return history for calculating sharpe ratio
-        self.eps = eps
+        self.l2 = self.config['risk_penalty']  # lambda of risk regularization penalty
+        # self.p_rtn_history = list()  # store log return history for calculating sharpe ratio
+        self.eps = config['eps']
 
     def _init_weights(self):
         if self.config['add_cash_asset']:
@@ -44,7 +42,7 @@ class PortfolioSimulator(object):
         if self.config['add_cash_asset']:
             assert y1[0] == 1.0, 'y1[0] must be 1 if added cash'
 
-        w0 = self.w0
+        # w0 = self.w0
         p0 = self.p0
 
         # dw1 = (y1 * w0) / (np.dot(y1, w0) + eps)  # (eq7) weights evolve into
@@ -99,7 +97,7 @@ class PortfolioSimulator(object):
 
     def reset(self):
         # self.infos.clear()
+        # self.p_rtn_history.clear()
         self.w0 = self._init_weights()
         self.dw = self._init_weights()
-        self.p_rtn_history.clear()
         self.p0 = 1.0

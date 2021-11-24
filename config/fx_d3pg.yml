@@ -60,6 +60,8 @@ agent_device: cpu
 save_reward_threshold: 0.01 # difference in best reward to save agent model
 replay_memory_prioritized: 0
 save_buffer_on_disk: 0
+risk_penalty: 0.3
+eps: 0.00000001
 
 # Network parameters
 critic_learning_rate: 0.0005

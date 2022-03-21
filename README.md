@@ -5,7 +5,7 @@ re-balancing model from [1].
 The fundamental model in here is D3PG from [2], the architecture of the D3PG model can be found
 in ```architecture``` folder.
 
-The system was tested under Windows 10 Pro Version 21H2 (OS Build 19044.1586), Intel Core i7-10750H, Nvidia GTX 1650 Ti
+The system was tested under Windows 10 Pro Version 21H2 (OS Build 19044.1586), Intel Core i7-10750H, Nvidia GTX 1650 Ti.
 
 CUDA version : 
 ```

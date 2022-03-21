@@ -14,7 +14,7 @@ file_extension: .csv
 # Ray settings
 dashboard_port: 9527
 
-# TA-LIB
+# TA-LIB (size of n_features)
 indicators:
 #    - god_price
 #     - god_return

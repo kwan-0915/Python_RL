@@ -91,7 +91,8 @@ def main(input_config=None):
     action_dim = num_asset * input_config["action_dim"]
 
     # Create directory for experiment
-    experiment_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/" + f"{config['results_path']}/{config['env']}-{config['model']}-{datetime.now():%Y-%m-%d_%H-%M-%S}"
+    experiment_dir = os.path.dirname(os.path.abspath(__file__)) + "/" + f"{config['results_path']}/{config['env']}-{config['model']}-{datetime.now():%Y-%m-%d_%H-%M-%S}"
+
     if not os.path.exists(experiment_dir): os.makedirs(experiment_dir)
 
     # Shared object
@@ -177,10 +178,12 @@ if __name__ == '__main__':
 
         print('End main thread')
 
-    else:
+    elif inputs['mode'] == 'eval':
         with open(inputs['config_file'], "r") as file:
             config = yaml.load(file, Loader=yaml.SafeLoader)
             config['path'] = inputs['data_file']
             config['entry_dir'] = inputs['result_file']
             eval(config)
+
+    else: raise KeyError('Mode can only be either train or eval')
 

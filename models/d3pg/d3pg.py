@@ -6,9 +6,7 @@ import time
 import numpy as np
 import torch.nn as nn
 import torch.optim as optim
-from copy import deepcopy
 from models.d3pg.critic import Critic
-from utilities.ou_noise import OUNoise
 from utilities.logger import Logger
 
 class D3PG(object):
@@ -16,13 +14,7 @@ class D3PG(object):
 
     def __init__(self, config, actor, target_actor, shared_actor, log_dir=''):
         num_asset = config['num_asset'] + int(config['add_cash_asset'])  # get num of asset for first dim of state and action for replay buffer
-        hidden_dim = config['dense_size']
-        state_dim = num_asset * config["state_dim"]
         action_dim = num_asset * config["action_dim"]
-        critic_lr = config['critic_learning_rate']
-        actor_lr = config['actor_learning_rate']
-        n_features = config['n_features']
-        seq_len = config["state_dim"]
         self.num_train_steps = config['num_steps_train']
         self.device = config['device']
         self.max_steps = config['max_ep_length']
@@ -36,40 +28,44 @@ class D3PG(object):
         self.log_dir = log_dir
         self.logger = Logger(f"{log_dir}/learner")
 
-        # Noise process
-        self.ou_noise = OUNoise(dim=config["action_dim"], low=config["action_low"], high=config["action_high"])
-
         # Base Actor and Critic
         self.actor = actor
-        self.critic = Critic(n_features, seq_len, action_dim, hidden_dim, device=self.device)
+        self.critic = Critic(config['n_features'], config["state_dim"], action_dim, config['dense_size'], self.device, config['conv_channel_size'], config['kernel_size'],
+                             config['n_layer'], config['init_w'])
         
         # Target Actor and Critic
         self.target_actor = target_actor
         self.target_critic = copy.deepcopy(self.critic)
         
         # Actor and Critic Optimizer
-        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=actor_lr)
-        self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=critic_lr)
+        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=config['actor_learning_rate'])
+        self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=config['critic_learning_rate'])
 
         self.value_criterion = nn.MSELoss(reduction='none')
 
     def _update_step(self, batch, min_value=-np.inf, max_value=np.inf):
         update_time = time.time()
 
-        state, action, reward, next_state, done, _, _, _ = batch
+        state, action, reward, next_state, done = batch
 
-        state_c = deepcopy(state)
-        action_c = deepcopy(action)
-        reward_c = deepcopy(reward)
-        next_state_c = deepcopy(next_state)
-        done_c = deepcopy(done)
+        # state_c = deepcopy(state)
+        # action_c = deepcopy(action)
+        # reward_c = deepcopy(reward)
+        # next_state_c = deepcopy(next_state)
+        # done_c = deepcopy(done)
+        #
+        # # Move to CUDA
+        # state = torch.from_numpy(state_c).float().to(self.device)
+        # action = torch.from_numpy(action_c).float().to(self.device)
+        # reward = torch.from_numpy(reward_c).float().to(self.device)
+        # next_state = torch.from_numpy(next_state_c).float().to(self.device)
+        # done = torch.from_numpy(done_c).float().to(self.device)
 
-        # Move to CUDA
-        state = torch.from_numpy(state_c).float().to(self.device)
-        action = torch.from_numpy(action_c).float().to(self.device)
-        next_state = torch.from_numpy(reward_c).float().to(self.device)
-        reward = torch.from_numpy(next_state_c).float().to(self.device)
-        done = torch.from_numpy(done_c).float().to(self.device)
+        state = torch.from_numpy(state).float().to(self.device)
+        action = torch.from_numpy(action).float().to(self.device)
+        reward = torch.from_numpy(reward).float().to(self.device)
+        next_state = torch.from_numpy(next_state).float().to(self.device)
+        done = torch.from_numpy(done).float().to(self.device)
 
         # ------- Update critic -------
         next_action = self.target_actor(next_state)

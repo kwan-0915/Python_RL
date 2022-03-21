@@ -5,7 +5,7 @@ random_seed: 1983
 data_source: fx
 add_cash_asset: True
 start_date: 1/1/2015
-num_asset: 7
+num_asset: 1
 num_data: 6400
 window_length: 64
 ohlc_interval: 1h
@@ -14,28 +14,29 @@ file_extension: .csv
 # Ray settings
 dashboard_port: 9527
 
-# TA-LIB
+# TA-LIB (size of n_features)
 indicators:
 #    - god_price
 #     - god_return
 #     - god_future_dir
+#     - rsi
      - log_return
      - above_mean
-     - norm_price
      - mov_avg_5
-     - rsi
+#     - spinning_top
+#     - hikkake
+#     - norm_price
 #     - macd_hist
 #     - stochastic
 #     - stochRSI
-#     - spinning_top
-     - hikkake
 
 # Environment parameters
 env: FX
 trading_cost: 0.0005 # 0.0005
 time_cost: 0
-n_features: 6
-state_dim: 24 # state_dim / asset
+n_features: 3
+num_rand_feat: 0
+state_dim: 32 # state_dim / asset
 action_dim: 1 # action_dim / asset
 action_low: -1
 action_high: 1
@@ -43,22 +44,24 @@ num_agents: 2
 
 # Training parameters
 model: d3pg
-batch_size: 1152          # batch_size = n_features * num_asset * state_dim
-num_steps_train: 100_000 # number of episodes from all agents
+batch_size: 256          # batch_size = n_features * num_asset * state_dim
+num_steps_train: 10000 # number of episodes from all agents
 max_ep_length: 480 # maximum number of steps per episode
-replay_mem_size: 1500 # maximum capacity of replay memory
+replay_mem_size: 1000 # maximum capacity of replay memory
 discount_rate: 0.99 # Discount rate (gamma) for future rewards
 n_step_returns: 1 # number of future steps to collect experiences for N-step returns
 update_agent_ep: 1 # agent gets latest parameters from learner every update_agent_ep episodes
 replay_queue_size: 64 # queue with replays from all the agents
 batch_queue_size: 64 # queue with batches given to learner
 replay_priorities_queue_size: 64
-num_episode_save: 100
+num_episode_save: 20
 device: cuda
 agent_device: cpu
 save_reward_threshold: 0.01 # difference in best reward to save agent model
 replay_memory_prioritized: 0
 save_buffer_on_disk: 0
+risk_penalty: 0.3
+eps: 0.00000001
 
 # Network parameters
 critic_learning_rate: 0.0005
@@ -66,6 +69,10 @@ actor_learning_rate: 0.0005
 dense_size: 400 # size of the 2 hidden layers in networks
 final_layer_init: 0.003
 tau: 0.001 # parameter for soft target network updates
+conv_channel_size: 32
+kernel_size: 3
+n_layer: 2
+init_w: 0.003
 
 # Miscellaneous
 results_path: results

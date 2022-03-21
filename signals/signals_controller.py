@@ -16,8 +16,8 @@ class SignalsController:
         if 'random_seed' in config:
             self.seed = config['random_seed']
             np.random.seed(self.seed)
-        else:
-            self.seed = None
+
+        else: self.seed = None
 
         self.data_source = config['data_source']
         # whether include timestamp in the data feed, default is False
@@ -36,32 +36,36 @@ class SignalsController:
 
     def get_multi_df(self):
         if self.data_source == 'sinewave':
-            start_date = self.config['start_date']
-            num_asset = self.config['num_asset']
-            num_data = self.config['num_data']
-            noise = self.config['noise']
-            damping = self.config['damping']
-            data_gen = ShmOHLCGenerator(seed=self.seed, start_date=start_date, num_asset=num_asset, num_data=num_data, noise=noise, damping=damping)
+            data_gen = ShmOHLCGenerator(seed=self.seed,
+                                        start_date=self.config['start_date'],
+                                        num_asset=self.config['num_asset'],
+                                        num_data=self.config['num_data'],
+                                        noise=self.config['noise'],
+                                        damping=self.config['damping'])
+
             source_multi_data_df = data_gen.get_multi_data_df()
+
         elif self.data_source == 'ou':
-            start_date = self.config['start_date']
-            num_asset = self.config['num_asset']
-            num_data = self.config['num_data']
-            sigma = self.config['sigma']
-            tau = self.config['ou_tau']
-            data_gen = OuOHLCGenerator(seed=self.seed, start_date=start_date, num_asset=num_asset, num_data=num_data, sigma=sigma, tau=tau)
+            data_gen = OuOHLCGenerator(seed=self.seed,
+                                       start_date=self.config['start_date'],
+                                       num_asset=self.config['num_asset'],
+                                       num_data=self.config['num_data'],
+                                       sigma=self.config['sigma'],
+                                       tau=self.config['ou_tau'])
+
             source_multi_data_df = data_gen.get_multi_data_df()
+
         elif self.data_source == 'fx':
-            start_date = self.config['start_date']
-            num_asset = self.config['num_asset']
-            num_data = self.config['num_data']
-            ohlc_interval = self.config['ohlc_interval'] if 'ohlc_interval' in self.config else None
-            path = str(self.config['path'])
-            file_extension = str(self.config['file_extension'])
-            data_gen = FXOHLCGenerator(start_date=start_date, num_asset=num_asset, num_data=num_data, ohlc_interval=ohlc_interval, path=path, file_extension=file_extension)
+            data_gen = FXOHLCGenerator(start_date=self.config['start_date'],
+                                       num_asset=self.config['num_asset'],
+                                       num_data=self.config['num_data'],
+                                       ohlc_interval=self.config['ohlc_interval'] if 'ohlc_interval' in self.config else None,
+                                       path=str(self.config['path']),
+                                       file_extension=str(self.config['file_extension']))
+
             source_multi_data_df = data_gen.get_multi_data_df()
-        else:
-            raise ValueError('data source: {} is not available. please check config yml file.')
+
+        else: raise ValueError('data source: {} is not available. please check config yml file.')
 
         # add cash asset
         if self.config['add_cash_asset']: return self.add_cash(source_multi_data_df)
@@ -76,8 +80,10 @@ class SignalsController:
             time_index = self.multi_df.index.get_level_values(1)
             ts = np.expand_dims(time_index.values.astype(np.int64) // 10 ** 9, axis=1)
             values_with_ts = np.concatenate((values, ts), axis=1)
+
             # reshape to (num_asset, num_data, ohlcv+ts)
             data_out = values_with_ts.reshape((self.num_asset, -1, 6))
+
         else:
             # reshape to (num_asset, num_data, ohlcv)
             data_out = values.reshape((self.num_asset, -1, 5))
@@ -87,6 +93,7 @@ class SignalsController:
     def get_current_date(self):
         current_idx = self.start_index + self.current_step - 1  # minus 1 because idx start from 0
         datetime_index = self.multi_df.index.levels[1]
+
         return datetime_index[current_idx]
 
     @staticmethod
@@ -97,8 +104,7 @@ class SignalsController:
         cash_df.set_index('ticker', append=True, inplace=True)
         cash_df = cash_df.swaplevel()
 
-        for col in cash_df.columns:
-            cash_df[col].values[:] = 1
+        for col in cash_df.columns: cash_df[col].values[:] = 1
 
         return pd.concat([cash_df, multi_df])
 

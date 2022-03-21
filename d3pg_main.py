@@ -1,4 +1,3 @@
-import logging
 import os
 import sys
 import ray
@@ -8,12 +7,12 @@ import time
 import argparse
 import multiprocessing as mp
 from datetime import datetime
-from models.d3pg.agent import D3PGAgent
 from models.d3pg.d3pg import D3PG
 from models.d3pg.actor import Actor
-from utilities.replay_buffer import create_replay_buffer
-from utilities.shared_actor import SharedActor
+from models.d3pg.agent import D3PGAgent
 from utilities.logger import Logger
+from utilities.replay_buffer import D3PGReplayBuffer
+from utilities.shared_actor import SharedActor
 
 @ray.remote
 def sampler_worker(config, shared_actor, log_dir=''):
@@ -26,7 +25,7 @@ def sampler_worker(config, shared_actor, log_dir=''):
     logger = Logger(f"{log_dir}/data_struct")
 
     # Create replay buffer
-    replay_buffer = create_replay_buffer(config)
+    replay_buffer = D3PGReplayBuffer(int(config['replay_mem_size']))
 
     while ray.get(shared_actor.get_training_on.remote()):
         # (1) Transfer replays to global buffer
@@ -92,7 +91,8 @@ def main(input_config=None):
     action_dim = num_asset * input_config["action_dim"]
 
     # Create directory for experiment
-    experiment_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/" + f"{config['results_path']}/{config['env']}-{config['model']}-{datetime.now():%Y-%m-%d_%H-%M-%S}"
+    experiment_dir = os.path.dirname(os.path.abspath(__file__)) + "/" + f"{config['results_path']}/{config['env']}-{config['model']}-{datetime.now():%Y-%m-%d_%H-%M-%S}"
+
     if not os.path.exists(experiment_dir): os.makedirs(experiment_dir)
 
     # Shared object
@@ -103,9 +103,11 @@ def main(input_config=None):
     sampler_worker.remote(input_config, shared_actor, experiment_dir)
 
     # Learner (neural net training process)
-    target_actor = Actor(input_config['n_features'], input_config["state_dim"], action_dim, input_config['dense_size'], device=input_config['device'])
+    target_actor = Actor(input_config['n_features'], input_config["state_dim"], action_dim, input_config['dense_size'], device=input_config['device'], conv_channel_size=input_config['conv_channel_size'],
+                         kernel_size=input_config['kernel_size'], n_layer=input_config['n_layer'], init_w=input_config['init_w'])
     actor = copy.deepcopy(target_actor)
-    actor_cpu = Actor(input_config['n_features'], input_config["state_dim"], action_dim, input_config['dense_size'], device=input_config['agent_device'])
+    actor_cpu = Actor(input_config['n_features'], input_config["state_dim"], action_dim, input_config['dense_size'], device=input_config['agent_device'], conv_channel_size=input_config['conv_channel_size'],
+                      kernel_size=input_config['kernel_size'], n_layer=input_config['n_layer'], init_w=input_config['init_w'])
     target_actor.share_memory()
 
     learner_worker.remote(input_config, actor, target_actor, experiment_dir, shared_actor)
@@ -123,6 +125,27 @@ def main(input_config=None):
 
     return shared_actor
 
+def eval(config):
+    import torch
+
+    agent_dir = config['entry_dir'] + '\\agent_exploitation_0\\'
+    eval_dir = os.path.join(config['entry_dir'], r'evaluation')
+    if not os.path.exists(eval_dir): os.makedirs(eval_dir)
+
+    checkpoint_dir = sorted(os.listdir(agent_dir), key=lambda filename: filename.split('_')[4])[-1]
+    checkpoint_dir = os.path.join(agent_dir, checkpoint_dir)
+    print('Loading checkpoint file: ', checkpoint_dir)
+    trained_policy_actor = torch.load(checkpoint_dir)
+    print(trained_policy_actor)
+
+    eval_agent = D3PGAgent(config,
+                           policy=trained_policy_actor,
+                           n_agent=0,
+                           agent_type="exploitation",
+                           log_dir=eval_dir)
+
+    eval_agent.save_plot()
+
 if __name__ == '__main__':
     try:
         mp.set_start_method('spawn')
@@ -130,24 +153,37 @@ if __name__ == '__main__':
         pass
 
     parser = argparse.ArgumentParser(description='')
+    parser.add_argument("--mode", type=str, help="Train or Eval")
     parser.add_argument("--config_file", type=str, help="Config file path")
     parser.add_argument("--num_cpus", type=int, help="Number of available CPUs")
     parser.add_argument("--num_gpus", type=int, help="Number of available GPUs")
     parser.add_argument("--data_file", type=str, help="Abs path for csv file")
+    parser.add_argument("--result_file", type=str, help="Abs path for csv file", required=False)
     inputs = vars(parser.parse_args())
 
-    t0 = time.time()
+    if inputs['mode'] == 'train':
+        t0 = time.time()
 
-    with open(inputs['config_file'], "r") as file:
-        config = yaml.load(file, Loader=yaml.SafeLoader)
-        config['path'] = inputs['data_file']
-        ray.init(num_cpus=inputs['num_cpus'], num_gpus=inputs['num_gpus'], logging_level=logging.CRITICAL)
-        shared_actor = main(input_config=config)
+        with open(inputs['config_file'], "r") as file:
+            config = yaml.load(file, Loader=yaml.SafeLoader)
+            config['path'] = inputs['data_file']
+            ray.init(num_cpus=inputs['num_cpus'], num_gpus=inputs['num_gpus'])
+            shared_actor = main(input_config=config)
 
-    while not ray.get(shared_actor.get_main_thread.remote()): pass
+        while not ray.get(shared_actor.get_main_thread.remote()): pass
 
-    t1 = time.time()
-    time.sleep(1.5)
-    timer(t0, t1)
+        t1 = time.time()
+        time.sleep(1.5)
+        timer(t0, t1)
 
-    print('End main thread')
+        print('End main thread')
+
+    elif inputs['mode'] == 'eval':
+        with open(inputs['config_file'], "r") as file:
+            config = yaml.load(file, Loader=yaml.SafeLoader)
+            config['path'] = inputs['data_file']
+            config['entry_dir'] = inputs['result_file']
+            eval(config)
+
+    else: raise KeyError('Mode can only be either train or eval')
+

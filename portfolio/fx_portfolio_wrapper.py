@@ -47,31 +47,16 @@ class FXPortfolioWrapper(ABCEnvWrapper):
         close_price = state[:, :, 3]
         local_config = FXPortfolioWrapper.global_config
         seq_len = local_config['state_dim']
-        expected_indicators = local_config['indicators']
-        feat_controller = FeatController(ohlcv_data=state, indicators=expected_indicators)
+        feat_controller = FeatController(ohlcv_data=state, indicators=local_config['indicators'])
 
         # 2) feature settings
         features = feat_controller.get_feats()
 
-        # ) add manual features
-        # import datetime
-        # dt = state[0, :, 5]
-        # dt_start = datetime.datetime.utcfromtimestamp(float(dt[0]))
-        # dt_end = datetime.datetime.utcfromtimestamp(float(dt[-1]))
-        # print(f'run date: {dt_start} - {dt_end}')
-
         # ) get only last seq_len data in features
-        for i in range(len(features)):
-            features[i] = features[i][:, -seq_len:]
-        #     print(f'feature {i} -- {expected_indicators[i]}:')
-        #     print(features[i].shape)
-        #     print(features[i])
-        # raise ValueError
+        for i in range(len(features)): features[i] = features[i][:, -seq_len:]
 
         # ) add random features if necessary
-        num_rand_feat = 0
-        for i in range(num_rand_feat):
-            features.append(np.random.randn(close_price.shape[0], seq_len))
+        for i in range(local_config['num_rand_feat']): features.append(np.random.randn(close_price.shape[0], seq_len))
 
         # 3) combine features as state
         n_features = len(features)
@@ -80,11 +65,8 @@ class FXPortfolioWrapper(ABCEnvWrapper):
         processed_state = processed_state.reshape((n_features, num_assets, seq_len))
         processed_state = np.swapaxes(processed_state, 0, 1)
         processed_state = np.swapaxes(processed_state, 1, 2)
-        # print(processed_state)
-        # print(processed_state.shape)
-        # raise ValueError
-
         processed_state = processed_state.flatten()
+
         return processed_state
 
     @staticmethod

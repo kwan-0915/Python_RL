@@ -80,6 +80,31 @@ class BaseReplayBuffer(object):
 
         print(f"Buffer dumped to {fn}")
 
+class D3PGReplayBuffer(BaseReplayBuffer):
+    def add(self, state, action, reward, next_state, done, *args):
+        data = (state, action, reward, next_state, done)
+        self._storage.append(data)
+        self._next_idx += 1
+
+    def _encode_sample(self, indies):
+        states, actions, rewards, next_states, dones = [], [], [], [], []
+
+        for index in indies:
+            data = self._storage[index]
+            state, action, reward, next_state, done = data
+            states.append(np.array(state, copy=False))
+            actions.append(np.array(action, copy=False))
+            rewards.append(reward)
+            next_states.append(np.array(next_state, copy=False))
+            dones.append(done)
+
+        return [np.array(states), np.array(actions), np.array(rewards), np.array(next_states), np.array(dones)]
+
+    def sample(self, batch_size, **kwags):
+        idxes = [random.randint(0, len(self._storage) - 1) for _ in range(batch_size)]
+
+        return self._encode_sample(idxes)
+
 class PrioritizedReplayBuffer(BaseReplayBuffer):
     def __init__(self, size, alpha):
         """Create Prioritized Replay buffer.
@@ -212,7 +237,7 @@ class SimpleReplayBuffer:
         # self.max_size = capacity
         self.storage = deque(maxlen=capacity)
 
-    def push(self, data):
+    def add(self, data):
         self.storage.append(data)
         # if len(self.storage) == self.max_size:
         #     self.storage[int(self.ptr)] = data
